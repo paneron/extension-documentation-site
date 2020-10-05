@@ -45,13 +45,13 @@ const MenuBar: React.FC<MenuBarProps> = function ({ menu, view }) {
   return (
     <MenuWrapper>
       {Object.entries(menu).map(([ groupID, group ], idx) =>
-        <>
+        <React.Fragment key={idx}>
           {idx > 0 ? <Divider /> : null}
           <ControlGroup key={groupID}>
             {Object.entries(group).map(([ buttonID, button ]) =>
               ButtonFactory(view)({ key: buttonID, item: button }))}
           </ControlGroup>
-        </>
+        </React.Fragment>
       )}
 
     </MenuWrapper>
