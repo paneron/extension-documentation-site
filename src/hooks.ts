@@ -1,4 +1,3 @@
-import log from 'electron-log';
 import yaml from 'js-yaml';
 
 import {
@@ -23,8 +22,6 @@ export type DocPageDataHook = (useObjectData: ObjectDataHook, paths: string[]) =
 export const useDocPageSyncStatus: DocPageSyncStatusHook = (useObjectSyncStatus) => {
   const result = useObjectSyncStatus();
   const objects = result.value;
-
-  log.debug("Got object sync status", objects);
 
   const filteredObjects = Object.entries(objects).
     filter(([atPath, _]) => isDocumentationPage(atPath)).
