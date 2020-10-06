@@ -23,10 +23,10 @@ export const DocPageEdit: PluginFC<{
 }> =
 function ({ React, useObjectData, useDocPageData, path, onSave }) {
   const data = useDocPageData(useObjectData, [path]);
-  const originalPage: SourceDocPageData | undefined = data.value[path];
-
   const [resetCounter, updateResetCounter] = React.useState(0);
   const [editedPage, updateEditedPage] = React.useState<null | SourceDocPageData>(null);
+
+  const originalPage = (data.value[path] || undefined) as SourceDocPageData | undefined;
 
   const page: SourceDocPageData | null = editedPage || originalPage || null;
 
