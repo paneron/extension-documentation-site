@@ -117,6 +117,12 @@ function ({ React, useObjectData, useObjectSyncStatus, changeObjects }) {
 
     } finally {
       setBusy(false);
+
+      if (newPage === null) {
+        selectPage(undefined);
+      } else {
+        selectPage(docPath);
+      }
     }
   }
 
