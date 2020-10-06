@@ -2,18 +2,17 @@
 /** @jsxFrag React.Fragment */
 
 import log from 'electron-log';
-import { ClassNames, css, jsx } from '@emotion/core';
+import { css, jsx } from '@emotion/core';
 
 import { PluginFC, RepositoryViewProps } from '@riboseinc/paneron-extension-kit/types';
 
-import { Button, ButtonGroup, Classes, Colors, ControlGroup, H6, InputGroup } from '@blueprintjs/core';
+import { Button, ButtonGroup, Colors, ControlGroup, H6, InputGroup } from '@blueprintjs/core';
 
 import { DocPageDataHook } from './hooks';
 import { isProseMirrorStructure, SourceDocPageData } from './types';
 
-import Editor from '@riboseinc/reprose/author/editor';
-import editorProps, { MenuWrapper } from './prosemirror/editor';
 import { PROSEMIRROR_DOC_STUB } from './util';
+import { ContentsEditor, MenuWrapper, SummaryEditor } from './prosemirror/editor';
 
 
 export const DocPageEdit: PluginFC<{
@@ -96,22 +95,13 @@ function ({ React, useObjectData, useDocPageData, path, onSave }) {
           Summary
         </H6>
 
-        <Editor
+        <SummaryEditor
           key={`${path}=${JSON.stringify(initialSummary || {})}-${resetCounter}`}
           onChange={canEdit ?
             ((newDoc) => updateEditedPage({ ...page!, summary: { doc: newDoc } }))
             : undefined}
-          initialDoc={initialSummary || PROSEMIRROR_DOC_STUB}
-          css={css`flex: 1; overflow-y: auto; padding: 1rem; background: ${Colors.GRAY5}`}
-          proseMirrorClassName={`
-            ${Classes.ELEVATION_3}
-            ${css({
-              borderRadius: '.3rem !important',
-              padding: '1.5rem !important',
-            })}
-          `}
+          initialDoc={initialSummary || PROSEMIRROR_DOC_STUB }
           logger={log}
-          {...editorProps}
         />
       </PageSection>
 
@@ -121,27 +111,14 @@ function ({ React, useObjectData, useDocPageData, path, onSave }) {
           expanded={contentsExpanded}
           onExpand={expandContents}
           css={css`${contentsExpanded ? 'flex: 1' : 'flex: 0'}; min-height: 7rem;`}>
-        <ClassNames>
-          {({ css, cx }) => (
-            <Editor
-              key={`${path}=${JSON.stringify(initialContents || {})}-${resetCounter}`}
-              onChange={canEdit ?
-                ((newDoc) => updateEditedPage({ ...page!, contents: { doc: newDoc } }))
-                : undefined}
-              initialDoc={initialContents || PROSEMIRROR_DOC_STUB}
-              css={css`flex: 1; overflow-y: auto; padding: 1rem; background: ${Colors.GRAY5}`}
-              proseMirrorClassName={`
-                ${Classes.ELEVATION_3}
-                ${css({
-                  borderRadius: '.3rem !important',
-                  padding: '1.5rem !important',
-                })}
-              `}
-              logger={log}
-              {...editorProps}
-            />
-          )}
-        </ClassNames>
+        <ContentsEditor
+          key={`${path}=${JSON.stringify(initialContents || {})}-${resetCounter}`}
+          onChange={canEdit ?
+            ((newDoc) => updateEditedPage({ ...page!, contents: { doc: newDoc } }))
+            : undefined}
+          initialDoc={initialContents || PROSEMIRROR_DOC_STUB}
+          logger={log}
+        />
       </PageSection>
 
       <MenuWrapper>

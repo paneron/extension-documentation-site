@@ -1,20 +1,24 @@
 /** @jsx jsx */
 /** @jsxFrag React.Fragment */
 
-import { css, jsx } from '@emotion/core';
+import { ClassNames, css, jsx } from '@emotion/core';
 import React from 'react';
 
-import { AnchorButton, ControlGroup, Divider, IconName, Tooltip } from '@blueprintjs/core';
+import { AnchorButton, Classes, Colors, ControlGroup, Divider, IconName, Tooltip } from '@blueprintjs/core';
 
 import { MenuBarProps, MenuButtonFactory } from '@riboseinc/reprose/author/menu';
 
+import code from '@riboseinc/reprose/features/code/author';
 import blocky from '@riboseinc/reprose/features/blocky/author';
 import paragraph from '@riboseinc/reprose/features/paragraph/author';
 import lists from '@riboseinc/reprose/features/lists/author';
 
+import BaseEditor, { EditorProps } from '@riboseinc/reprose/author/editor';
+
 import featuresToEditorProps from '@riboseinc/reprose/author';
 
-import schema from './schema';
+import { contentsSchema, summarySchema } from './schema';
+import { Schema } from 'prosemirror-model';
 
 
 const ICONS: Record<string, IconName> = {
@@ -23,6 +27,8 @@ const ICONS: Record<string, IconName> = {
   ordered_list: 'numbered-list',
   lift: 'chevron-left',
   join_up: 'collapse-all',
+  code: 'code',
+  code_block: 'code-block',
 };
 
 const ButtonFactory: MenuButtonFactory = ({ state, dispatch }) => function ({ key, item }) {
@@ -66,8 +72,58 @@ export const MenuWrapper: React.FC<Record<never, never>> = function ({ children 
   );
 };
 
-const editorProps = featuresToEditorProps([blocky, paragraph, lists], schema, {
+
+const contentsEditorProps = featuresToEditorProps([
+  blocky,
+  paragraph,
+  lists,
+  code({ allowBlocks: true }),
+], contentsSchema, {
   MenuBar,
 });
 
-export default editorProps;
+
+const summaryEditorProps = featuresToEditorProps([
+  code({ allowBlocks: false }),
+], summarySchema, {
+  MenuBar,
+});
+
+
+type FinalEditorProps<S extends Schema> = Pick<EditorProps<S>, 'initialDoc' | 'onChange' | 'logger'>;
+
+
+const Editor: React.FC<EditorProps<any>> = function (props) {
+  return (
+    <ClassNames>
+      {({ css, cx }) => (
+        <BaseEditor
+          css={css`flex: 1; overflow-y: auto; padding: 1rem; background: ${Colors.GRAY5}`}
+          autoFocus
+          proseMirrorClassName={`
+            ${Classes.ELEVATION_3}
+            ${css({
+              borderRadius: '.3rem !important',
+              padding: '1.5rem !important',
+            })}
+          `}
+          {...props}
+        />
+      )}
+    </ClassNames>
+  );
+};
+
+
+export const SummaryEditor: React.FC<FinalEditorProps<typeof summarySchema>> = function (props) {
+  return (
+    <Editor {...summaryEditorProps} {...props} />
+  );
+};
+
+
+export const ContentsEditor: React.FC<FinalEditorProps<typeof contentsSchema>> = function (props) {
+  return (
+    <Editor {...contentsEditorProps} {...props} />
+  );
+};
