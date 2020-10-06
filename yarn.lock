@@ -987,10 +987,10 @@
   resolved "https://registry.yarnpkg.com/@riboseinc/paneron-extension-kit/-/paneron-extension-kit-1.0.0-alpha5.tgz#b9ab485911e5609ccd20cd080e36cc2aa50a5826"
   integrity sha512-R+2Zxyo7i/GwRN60Sj6RJ8h4QwQITTJB1i2c7BmMP/xpdcuL7gqxySGAaR+UWEsKhaW67Ry7rF31NrLz0jZ//A==
 
-"@riboseinc/reprose@^1.0.0-alpha1":
-  version "1.0.0-alpha1"
-  resolved "https://registry.yarnpkg.com/@riboseinc/reprose/-/reprose-1.0.0-alpha1.tgz#ccabc11ee3da82c844ce8f40bf856c297c1a22d4"
-  integrity sha512-QwxSRSpcg/pRnOubPXx8o6uo70vHRKoMYu8KTCABAkhwYuAZZVu5/sndxYE+t5lzlLWXUy8iv6DwH3pFbTda2A==
+"@riboseinc/reprose@^1.0.0-alpha2":
+  version "1.0.0-alpha2"
+  resolved "https://registry.yarnpkg.com/@riboseinc/reprose/-/reprose-1.0.0-alpha2.tgz#84301cfa10bd217a17c8ee47f34f0c9677f52a03"
+  integrity sha512-PdqeErn7k4vSIT57NdNFAzIR/q1cpOefCnpUuOB2sveop1ztAT7UNWyQmxeT5GXpFS5anR9Qiy9LXx9/HREyDA==
   dependencies:
     prosemirror-commands "^1.1.4"
     prosemirror-inputrules "^1.1.3"
