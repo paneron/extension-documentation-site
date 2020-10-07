@@ -50,6 +50,7 @@ function ({ React, useObjectData, useObjectSyncStatus, changeObjects }) {
       id: effectivePath,
       label: data.title,
       isSelected: selectedPagePath === effectivePath,
+      hasCaret: false,
       isExpanded: true,
       secondaryLabel: <DocPageActions
         docPath={effectivePath}

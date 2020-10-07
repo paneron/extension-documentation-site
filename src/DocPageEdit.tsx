@@ -245,7 +245,6 @@ const PageSection: PluginFC<{
             height: 1rem; color: ${Colors.WHITE};
             text-transform: uppercase;
             font-size: 90%;
-            letter-spacing: .05rem;
             transform: rotate(-90deg) translateX(-100%);
             transform-origin: top left;
             position: absolute; top: .25rem; left: 0; bottom: 0;
