@@ -169,26 +169,26 @@ function ({ childPages, syncStatus, docPath, pageData, handleSavePage }) {
 
   return (
     <ButtonGroup minimal>
-        <Button
-          small disabled={!handleSavePage || childPages.length > 0 || docPath.split('/').length <= 1}
-          icon="remove"
-          title="Remove page"
-          onClick={() => {
-            handleSavePage!(docPath, pageData || null, null);
-          }}
-        />
-        <Button
-          small icon="add"
-          title="Add page"
-          disabled={!handleSavePage}
-          onClick={() => {
-            handleSavePage!(`${docPath}/${newID}`, null, {
-              title: "New page",
-              media: [],
-              redirectFrom: [],
-            });
-          }}
-        />
+      <Button
+        small disabled={!handleSavePage || childPages.length > 0 || docPath.split('/').length <= 1}
+        icon="remove"
+        title="Remove page"
+        onClick={() => {
+          handleSavePage!(docPath, pageData || null, null);
+        }}
+      />
+      <Button
+        small icon="add"
+        title="Add page"
+        disabled={!handleSavePage}
+        onClick={() => {
+          handleSavePage!(`${docPath}/${newID}`, null, {
+            title: "New page",
+            media: [],
+            redirectFrom: [],
+          });
+        }}
+      />
       <Button
         disabled
         small
