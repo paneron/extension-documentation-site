@@ -24,7 +24,7 @@ export function getPageChangeset(
 
     log.debug("Page is being updated", docPath);
 
-    const children = Object.keys(pageData).find(path => path.startsWith(docPath)) || [];
+    const children = Object.keys(pageData).find(path => path.startsWith(`${docPath}/`)) || [];
     log.debug("Page children", children);
 
     const pathCandidates = filepathCandidates(docPath);

@@ -163,7 +163,7 @@ const DocPageActions: React.FC<{
   handleSavePage?: DocPageSaveHandler
 }> =
 function ({ childPages, syncStatus, docPath, pageData, handleSavePage }) {
-  const occupiedChildPaths = childPages.map(c => c.id as string);
+  const occupiedChildPaths = childPages.map(c => path.basename(c.id as string));
   const newID: string = occupiedChildPaths.indexOf('new-page') >= 0
     ? `new-page-${occupiedChildPaths.filter(p => p.startsWith('new-page')).length}`
     : 'new-page';
