@@ -95,22 +95,25 @@ type FinalEditorProps<S extends Schema> = Pick<EditorProps<S>, 'initialDoc' | 'o
 
 const Editor: React.FC<EditorProps<any>> = function (props) {
   return (
-    <ClassNames>
-      {({ css, cx }) => (
-        <BaseEditor
-          css={css`flex: 1; overflow-y: auto; padding: 1rem; background: ${Colors.GRAY5}`}
-          autoFocus
-          proseMirrorClassName={`
-            ${Classes.ELEVATION_3}
-            ${css({
-              borderRadius: '.3rem !important',
-              padding: '1.5rem !important',
-            })}
-          `}
-          {...props}
-        />
-      )}
-    </ClassNames>
+    <div css={css`display: flex; flex-flow: column nowrap; overflow: hidden;`} className={props.className}>
+      <ClassNames>
+        {({ css, cx }) => (
+          <BaseEditor
+            css={css`flex: 1; overflow-y: auto; padding: 1rem; background: ${Colors.GRAY5};`}
+            className={props.className}
+            autoFocus
+            proseMirrorClassName={`
+              ${Classes.ELEVATION_3}
+              ${css({
+                borderRadius: '.3rem !important',
+                padding: '1.5rem !important',
+              })}
+            `}
+            {...props}
+          />
+        )}
+      </ClassNames>
+    </div>
   );
 };
 

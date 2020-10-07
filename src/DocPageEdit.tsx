@@ -124,7 +124,6 @@ function ({ React, useObjectData, useDocPageData, path, onSave }) {
           expanded={!contentsExpanded}
           onExpand={(state) => expandContents(!state)}
           React={React}
-          css={css`${contentsExpanded ? 'flex: 0' : 'flex: 1'}; min-height: 5.5rem;`}
           title="Meta">
         <div css={css`flex-shrink: 0; padding: .5rem 1rem; overflow: hidden; display: flex; flex-flow: column nowrap; & > :not(:last-child) { margin-bottom: .5rem; }`}>
           <FieldWithErrors errors={validationErrors.title || []}>
@@ -154,6 +153,7 @@ function ({ React, useObjectData, useDocPageData, path, onSave }) {
               errors={[]}
               label="Importance"
               inline
+              css={contentsExpanded ? css`display: none` : undefined}
               helperText="Pages with higher importance number appear before their siblings.">
             <NumericInput
               value={page?.importance || ''}
@@ -162,11 +162,16 @@ function ({ React, useObjectData, useDocPageData, path, onSave }) {
           </FieldWithErrors>
         </div>
 
-        <H6 css={css`color: ${Colors.GRAY2}; margin-left: 1rem; margin-top: .5rem;`}>
+        <H6
+            css={css`
+              color: ${Colors.GRAY2}; margin-left: 1rem; margin-top: .5rem;
+              ${contentsExpanded ? css`display: none` : ''}
+            `}>
           Summary
         </H6>
 
         <SummaryEditor
+          css={contentsExpanded ? css`display: none` : undefined}
           key={`${path}=${JSON.stringify(initialSummary || {})}-${resetCounter}`}
           onChange={canEdit ?
             ((newDoc) => updateEditedPage({ ...page!, summary: { doc: newDoc } }))
@@ -181,8 +186,9 @@ function ({ React, useObjectData, useDocPageData, path, onSave }) {
           React={React}
           expanded={contentsExpanded}
           onExpand={expandContents}
-          css={css`${contentsExpanded ? 'flex: 1' : 'flex: 0'}; min-height: 7rem;`}>
+          css={css`flex: 1; min-height: 30vh`}>
         <ContentsEditor
+          css={css`flex: 1;`}
           key={`${path}=${JSON.stringify(initialContents || {})}-${resetCounter}`}
           onChange={canEdit ?
             ((newDoc) => updateEditedPage({ ...page!, contents: { doc: newDoc } }))
