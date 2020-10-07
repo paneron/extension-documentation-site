@@ -3,16 +3,69 @@
 
 import log from 'electron-log';
 import { css, jsx } from '@emotion/core';
+import React from 'react';
 
 import { PluginFC, RepositoryViewProps } from '@riboseinc/paneron-extension-kit/types';
 
-import { Button, ButtonGroup, Colors, ControlGroup, H6, InputGroup } from '@blueprintjs/core';
+import {
+  Button, ButtonGroup, Colors, ControlGroup, FormGroup,
+  H6, IFormGroupProps, InputGroup, Intent, NumericInput
+} from '@blueprintjs/core';
 
 import { DocPageDataHook } from './hooks';
 import { isProseMirrorStructure, SourceDocPageData } from './types';
 
 import { PROSEMIRROR_DOC_STUB } from './util';
 import { ContentsEditor, MenuWrapper, SummaryEditor } from './prosemirror/editor';
+
+
+function validateDocPageData(page: SourceDocPageData): ValidationResult<Partial<SourceDocPageData>> {
+  const title = (page.title || '').trim() === ''
+    ? [{ message: "Title must not be empty" }]
+    : [];
+
+  return [{
+    title,
+  }, title.length < 1];
+}
+
+
+type ValidationErrors<T> = { [key in keyof T]: ValidationError[] }
+type ValidationResult<T> = [errors: ValidationErrors<T>, isValid: boolean]
+
+
+interface ValidationError {
+  message: string
+}
+
+
+const FieldErrors: React.FC<{ errors: ValidationError[], className?: string }> = function ({ errors, className }) {
+  return <ul css={css`margin: 0; padding-left: 1.25em;`} className={className}>
+    {errors.map(e => <li>{e.message}</li>)}
+  </ul>;
+};
+
+
+const FieldWithErrors: React.FC<{
+  errors: ValidationError[]
+} & IFormGroupProps> = function ({ errors, helperText, children, ...formGroupProps }) {
+  const effectiveHelperText: JSX.Element | undefined = helperText !== undefined || errors.length > 0
+    ? <>
+        {helperText || null}
+        {errors.length > 0 ? <FieldErrors errors={errors} /> : null}
+      </>
+    : undefined;
+
+  const intent: Intent | undefined = errors.length > 0 ? 'danger' : undefined;
+
+  return <FormGroup
+      helperText={effectiveHelperText}
+      css={css`margin: 0;`}
+      intent={intent}
+      {...formGroupProps}>
+    {children}
+  </FormGroup>;
+};
 
 
 export const DocPageEdit: PluginFC<{
@@ -32,6 +85,10 @@ function ({ React, useObjectData, useDocPageData, path, onSave }) {
   const page: SourceDocPageData | null = (onSave ? editedPage : null) || originalPage || null;
 
   const canEdit = page !== null && onSave !== undefined;
+
+  const [validationErrors, isValid] = editedPage !== null
+    ? validateDocPageData(editedPage)
+    : [{}, false];
 
   async function handleSave() {
     if (originalPage !== undefined && editedPage !== null && onSave) {
@@ -67,28 +124,42 @@ function ({ React, useObjectData, useDocPageData, path, onSave }) {
           expanded={!contentsExpanded}
           onExpand={(state) => expandContents(!state)}
           React={React}
-          css={css`${contentsExpanded ? 'flex: 0' : 'flex: 1'}; min-height: 5rem;`}
+          css={css`${contentsExpanded ? 'flex: 0' : 'flex: 1'}; min-height: 5.5rem;`}
           title="Meta">
         <div css={css`flex-shrink: 0; padding: .5rem 1rem; overflow: hidden; display: flex; flex-flow: column nowrap; & > :not(:last-child) { margin-bottom: .5rem; }`}>
-          <ControlGroup>
-            <Button small disabled>URL path</Button>
-            <InputGroup readOnly small fill value={path} />
-            <Button small disabled>Change</Button>
-            <Button small disabled>Change with redirect</Button>
-          </ControlGroup>
+          <FieldWithErrors errors={validationErrors.title || []}>
+            <InputGroup
+              fill
+              large
+              css={css`& input { font-weight: bold; }`}
+              placeholder="Page title"
+              value={page?.title || ''}
+              disabled={!canEdit}
+              onChange={canEdit
+                ? (evt: React.FormEvent<HTMLInputElement>) =>
+                    updateEditedPage({ ...page!, title: evt.currentTarget.value })
+                : undefined}
+            />
+          </FieldWithErrors>
 
-          <InputGroup
-            fill
-            large
-            css={css`& input { font-weight: bold; }`}
-            placeholder="Page title"
-            value={page?.title || ''}
-            disabled={!canEdit}
-            onChange={canEdit
-              ? (evt: React.FormEvent<HTMLInputElement>) =>
-                  updateEditedPage({ ...page!, title: evt.currentTarget.value })
-              : undefined}
-          />
+          <FieldWithErrors label="URL path" errors={[]} inline css={css`.bp3-form-content { flex: 1; }`}>
+            <ControlGroup>
+              <InputGroup readOnly fill value={path} />
+              <Button disabled>Change</Button>
+              <Button disabled>Change with redirect</Button>
+            </ControlGroup>
+          </FieldWithErrors>
+
+          <FieldWithErrors
+              errors={[]}
+              label="Importance"
+              inline
+              helperText="Pages with higher importance number appear before their siblings.">
+            <NumericInput
+              value={page?.importance || ''}
+              onValueChange={(val) => updateEditedPage({ ...page!, importance: val })}
+            />
+          </FieldWithErrors>
         </div>
 
         <H6 css={css`color: ${Colors.GRAY2}; margin-left: 1rem; margin-top: .5rem;`}>
@@ -125,7 +196,7 @@ function ({ React, useObjectData, useDocPageData, path, onSave }) {
         <ButtonGroup>
           <Button
               intent="success"
-              disabled={!onSave || editedPage === null}
+              disabled={!onSave || editedPage === null || !isValid}
               onClick={handleSave}>
             Commit new version
           </Button>
