@@ -1,6 +1,7 @@
 /** @jsx jsx */
 /** @jsxFrag React.Fragment */
 
+import nodePath from 'path';
 import log from 'electron-log';
 import { css, jsx } from '@emotion/core';
 import React from 'react';
@@ -29,22 +30,18 @@ function validateDocPageData(page: SourceDocPageData): ValidationResult<Partial<
   }, title.length < 1];
 }
 
-
 type ValidationErrors<T> = { [key in keyof T]: ValidationError[] }
 type ValidationResult<T> = [errors: ValidationErrors<T>, isValid: boolean]
-
 
 interface ValidationError {
   message: string
 }
-
 
 const FieldErrors: React.FC<{ errors: ValidationError[], className?: string }> = function ({ errors, className }) {
   return <ul css={css`margin: 0; padding-left: 1.25em;`} className={className}>
     {errors.map(e => <li>{e.message}</li>)}
   </ul>;
 };
-
 
 const FieldWithErrors: React.FC<{
   errors: ValidationError[]
@@ -73,16 +70,33 @@ export const DocPageEdit: PluginFC<{
   useObjectData: RepositoryViewProps["useObjectData"]
   useDocPageData: DocPageDataHook
   onSave?: (path: string, oldPage: SourceDocPageData, newDoc: SourceDocPageData) => Promise<void>
+  onUpdatePath?: (oldPath: string, newPath: string) => Promise<void>
+  //onApplyChangeset?: (changeset: ObjectChangeset, message: string) => Promise<void>
+  onJumpToPage: (path: string) => void
+  getPageTitleAtPath: (path: string) => string | null
+  mediaData: { [filename: string]: any }
 }> =
-function ({ React, useObjectData, useDocPageData, path, onSave }) {
-  const data = useDocPageData(useObjectData, [path]);
-  const [resetCounter, updateResetCounter] = React.useState(0);
-  const [editedPage, updateEditedPage] = React.useState<null | SourceDocPageData>(null);
+function ({
+    React, useObjectData, useDocPageData, path,
+    onSave, onUpdatePath,
+    onJumpToPage, getPageTitleAtPath,
+}) {
   const [contentsExpanded, expandContents] = React.useState<boolean | undefined>(true);
 
-  const originalPage = (data.value[path] || undefined) as SourceDocPageData | undefined;
+  const [resetCounter, updateResetCounter] = React.useState(0);
 
+  const data = useDocPageData(useObjectData, [path]);
+  const originalPage = (data.value[path] || undefined) as SourceDocPageData | undefined;
+  const [editedPage, updateEditedPage] = React.useState<null | SourceDocPageData>(null);
   const page: SourceDocPageData | null = (onSave ? editedPage : null) || originalPage || null;
+
+  const [editedURL, updateEditedURL] = React.useState<null | string>(null);
+  const canEditURL = onUpdatePath !== undefined && editedPage === null && path !== 'docs';
+  const url: string = editedURL || path;
+
+  const editedURLOccupiedByPageWithTitle: string | null = editedURL
+    ? getPageTitleAtPath(editedURL)
+    : null;
 
   const canEdit = page !== null && onSave !== undefined;
 
@@ -102,6 +116,24 @@ function ({ React, useObjectData, useDocPageData, path, onSave }) {
       updateEditedPage(null);
       updateResetCounter(c => c + 1);
     }
+  }
+
+  async function handleChangePath(withRedirect: boolean) {
+    if (editedURL === null || !onUpdatePath) {
+      return;
+    }
+    if (getPageTitleAtPath(editedURL) !== null) {
+      return;
+    }
+    if (withRedirect) {
+      log.warn("Want to add redirect from", path, "to", editedURL);
+    }
+    if (nodePath.dirname(path) !== nodePath.dirname(editedURL)) {
+      log.error("Cannot move page because dirnames don’t match!");
+      return;
+    }
+
+    await onUpdatePath(path, editedURL);
   }
 
   const initialContents: Record<string, any> | null =
@@ -141,11 +173,42 @@ function ({ React, useObjectData, useDocPageData, path, onSave }) {
             />
           </FieldWithErrors>
 
-          <FieldWithErrors label="URL path" errors={[]} inline css={css`.bp3-form-content { flex: 1; }`}>
+          <FieldWithErrors
+              label={`URL path: ${nodePath.dirname(`/${url}`).replace(/\/$/, '')}/`}
+              errors={editedURLOccupiedByPageWithTitle === null
+                ? []
+                : [{ message: `This path is occupied by page “${editedURLOccupiedByPageWithTitle}”` }]}
+              inline
+              css={css`.bp3-form-content { flex: 1; }`}>
             <ControlGroup>
-              <InputGroup readOnly fill value={path} />
-              <Button disabled>Change</Button>
-              <Button disabled>Change with redirect</Button>
+              <InputGroup
+                fill
+                value={nodePath.basename(url)}
+                disabled={!canEditURL}
+                onChange={(evt: React.FormEvent<HTMLInputElement>) =>
+                  updateEditedURL(`${nodePath.dirname(url)}/${evt.currentTarget.value}`)
+                }
+              />
+              {onUpdatePath !== undefined
+                ? <ButtonGroup>
+                    <Button
+                        onClick={() => handleChangePath(true)}
+                        disabled={editedURL === null || !canEditURL || editedURLOccupiedByPageWithTitle !== null}
+                        intent={editedURL === null || !canEditURL || editedURLOccupiedByPageWithTitle !== null
+                          ? undefined
+                          : 'success'}>
+                      Change with redirect
+                    </Button>
+                    <Button
+                        onClick={() => handleChangePath(false)}
+                        disabled={editedURL === null || !canEditURL || editedURLOccupiedByPageWithTitle !== null}
+                        intent={editedURL === null || !canEditURL || editedURLOccupiedByPageWithTitle !== null
+                          ? undefined
+                          : 'warning'}>
+                      Change
+                    </Button>
+                  </ButtonGroup>
+                : null}
             </ControlGroup>
           </FieldWithErrors>
 

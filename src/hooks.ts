@@ -1,3 +1,4 @@
+import path from 'path';
 import yaml from 'js-yaml';
 
 import {
@@ -8,7 +9,7 @@ import {
 } from '@riboseinc/paneron-extension-kit/types';
 
 import { SourceDocPageData } from './types';
-import { filepathCandidates, filepathToDocsPath, isDocumentationPage } from './util';
+import { filepathCandidates, filepathToDocsPath, getDocPagePaths, isDocumentationPage } from './util';
 
 
 
@@ -17,6 +18,9 @@ export type DocPageSyncStatusHook = (useObjectSyncStatus: ObjectSyncStatusHook) 
 
 export type DocPageDataHook = (useObjectData: ObjectDataHook, paths: string[]) =>
   ValueHook<Record<string, SourceDocPageData>>;
+
+export type DocPageMediaHook = (useObjectData: ObjectDataHook, pagePath: string, allFiles: string[]) =>
+  ReturnType<ObjectDataHook>;
 
 
 export const useDocPageSyncStatus: DocPageSyncStatusHook = (useObjectSyncStatus) => {
@@ -55,6 +59,9 @@ export const useDocPageData: DocPageDataHook = (useObjectData, paths) => {
   filter(([ _, data ]) => data !== null && data.encoding === 'utf-8').
   map(([ path, data ]) => {
     const item: SourceDocPageData = yaml.load(data!.value as string);
+    if (item.media === undefined) {
+      item.media = [];
+    }
     return { [filepathToDocsPath(path)]: item };
   }).
   reduce((p, c) => ({ ...p, ...c }), {});
@@ -63,4 +70,23 @@ export const useDocPageData: DocPageDataHook = (useObjectData, paths) => {
     ...data,
     value: parsedData
   };
+};
+
+
+export const useDocPageMedia: DocPageMediaHook = (useObjectData, docPath, allFiles) => {
+  const page = useDocPageData(useObjectData, [docPath]).value[docPath] || null;
+
+  const mediaData = useObjectData(
+    (page?.media || []).
+    map(mediaFile => {
+      const dir = getDocPagePaths(docPath, allFiles);
+      if (mediaFile.endsWith('.svg')) {
+        return { [path.join(dir.pathInUse, mediaFile)]: 'utf-8' as const } as ObjectDataRequest;
+      } else {
+        return { [path.join(dir.pathInUse, mediaFile)]: undefined } as ObjectDataRequest;
+      }
+    }).
+    reduce((p, c) => ({ ...p, ...c }), {}));
+
+  return mediaData;
 };
