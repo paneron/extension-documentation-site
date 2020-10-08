@@ -7,7 +7,7 @@ import log from 'electron-log';
 import React from 'react';
 import { css, jsx } from '@emotion/core';
 
-import { Button, ButtonGroup, Colors, ITreeNode, NonIdealState, Tree } from '@blueprintjs/core';
+import { ButtonGroup, Colors, Icon, ITreeNode, NonIdealState, Tree } from '@blueprintjs/core';
 
 import { FileChangeType, ObjectChangeset, RepositoryViewProps } from '@riboseinc/paneron-extension-kit/types';
 
@@ -22,7 +22,7 @@ Object.assign(console, log);
 
 
 export const RepositoryView: React.FC<RepositoryViewProps> =
-function ({ React, useObjectData, useObjectSyncStatus, changeObjects }) {
+function ({ React, setTimeout, useObjectData, useObjectSyncStatus, changeObjects }) {
   //log.debug("Rendering Doc site repository view");
 
   const [isBusy, setBusy] = React.useState(false);
@@ -44,8 +44,11 @@ function ({ React, useObjectData, useObjectSyncStatus, changeObjects }) {
     selectedPagePath,
     Object.keys(syncStatus));
 
+  const selectedPageChildren = Object.keys(allPageData.value).
+  filter(path => path.startsWith(`${selectedPagePath}/`)) || [];
+
   const selectedPageHasChildren = selectedPagePath
-    ? (Object.keys(allPageData.value).find(path => path.startsWith(`${selectedPagePath}/`)) || []).length > 0
+    ? selectedPageChildren.length > 0
     : false;
 
   //React.useEffect(() => {
@@ -81,12 +84,7 @@ function ({ React, useObjectData, useObjectSyncStatus, changeObjects }) {
       hasCaret: false,
       isExpanded: true,
       secondaryLabel: <DocPageActions
-        docPath={effectivePath}
-        childPages={[]}
-        onSavePage={!isBusy && isSelected ? handleSavePage : undefined}
-        syncStatus={syncStatus.value[`/${effectivePath}`]}
-        pageData={allPageData.value[effectivePath]}
-      />,
+        syncStatus={syncStatus.value[`/${effectivePath}`]} />,
       data: { importance: data.importance, filePath: path },
     };
   });
@@ -108,12 +106,6 @@ function ({ React, useObjectData, useObjectSyncStatus, changeObjects }) {
         if (JSON.stringify(currPathParts.slice(0, -1)) === JSON.stringify(candidateParts)) {
           candidate.childNodes ||= [];
           candidate.childNodes!.push(curr);
-          candidate.secondaryLabel = <DocPageActions
-            docPath={candidate.id as string}
-            pageData={allPageData.value[candidate.id as string]}
-            onSavePage={!isBusy && candidate.isSelected ? handleSavePage : undefined}
-            syncStatus={syncStatus.value[`/${candidate.id as string}`]}
-            childPages={candidate.childNodes} />;
         } else {
           attachToParent(candidate.childNodes || []);
         }
@@ -150,11 +142,7 @@ function ({ React, useObjectData, useObjectSyncStatus, changeObjects }) {
     let changeset: ObjectChangeset;
     let verb: string;
 
-    log.silly(1);
-
     const allFiles = Object.keys(syncStatus.asFiles);
-
-    log.silly(2);
 
     if (oldPage !== null && newPage !== null) {
       const filePaths = getDocPagePaths(docPath, allFiles);
@@ -170,7 +158,6 @@ function ({ React, useObjectData, useObjectSyncStatus, changeObjects }) {
         throw new Error("Cannot delete a page that is not selected");
       }
       verb = "Delete";
-      log.silly(3);
       log.debug("Selected page media", selectedPageMediaData.value);
       log.debug("Selected page has children", selectedPageHasChildren);
       changeset = getDeletePageChangeset(
@@ -189,7 +176,6 @@ function ({ React, useObjectData, useObjectSyncStatus, changeObjects }) {
       if (!parentData) {
         throw new Error("Unable to get parent page data when creating a page");
       }
-      log.silly(3);
       changeset = getAddPageChangeset(
         filepathCandidates(docPath)[0],
         newPage,
@@ -200,7 +186,6 @@ function ({ React, useObjectData, useObjectSyncStatus, changeObjects }) {
     } else {
       throw new Error("Invalid action when saving page");
     }
-    log.silly(4);
 
     return handleApplyChangeset(changeset, `${verb} ${docPath}`).then(() => {
       if (newPage === null) {
@@ -211,7 +196,7 @@ function ({ React, useObjectData, useObjectSyncStatus, changeObjects }) {
     });
   }
 
-  async function handleChangePath(oldPath: string, newPath: string) {
+  async function handleChangePath(oldPath: string, newPath: string, leaveRedirect: boolean) {
     log.debug("Moving doc page", oldPath, newPath);
 
     if (oldPath !== selectedPagePath || !selectedPageData) {
@@ -219,9 +204,16 @@ function ({ React, useObjectData, useObjectSyncStatus, changeObjects }) {
       throw new Error("Moving page that is not selected")
     }
 
+    const pageData = { ...selectedPageData };
+
+    if (leaveRedirect) {
+      pageData.redirectFrom ||= [];
+      pageData.redirectFrom.push(oldPath);
+    }
+
     const changeset = await getMovePathChangeset(
       getDocPagePaths(oldPath, Object.keys(syncStatus.asFiles)),
-      selectedPageData,
+      pageData,
       selectedPageHasChildren,
       selectedPageMediaData.value,
       newPath);
@@ -246,9 +238,25 @@ function ({ React, useObjectData, useObjectSyncStatus, changeObjects }) {
               useDocPageData={useDocPageData}
               useObjectData={useObjectData}
               path={selectedPagePath}
+
               onSave={!isBusy ? handleSavePage : undefined}
-              onUpdatePath={handleChangePath}
-              onJumpToPage={selectPage}
+              onUpdatePath={selectedPageHasChildren ? undefined : handleChangePath}
+              setTimeout={setTimeout}
+              onAddSubpage={async () => {
+                const occupiedChildPaths = selectedPageChildren.map(c => path.basename(c));
+                const newID: string = occupiedChildPaths.indexOf('new-page') >= 0
+                  ? `new-page-${occupiedChildPaths.filter(p => p.startsWith('new-page')).length}`
+                  : 'new-page';
+                await handleSavePage!(`${selectedPagePath}/${newID}`, null, {
+                  title: "New page",
+                  media: [],
+                  redirectFrom: [],
+                });
+              }}
+              onDelete={selectedPageHasChildren ? undefined : async () => {
+                await handleSavePage!(selectedPagePath, selectedPageData, null);
+              }}
+
               getPageTitleAtPath={(path) => (occupiedURLs[path] || null)}
               mediaData={selectedPageMediaData.value}
             />
@@ -259,53 +267,14 @@ function ({ React, useObjectData, useObjectSyncStatus, changeObjects }) {
 };
 
 
-type DocPageSaveHandler = (
-  docPath: string,
-  oldPage: SourceDocPageData | null,
-  newPage: SourceDocPageData | null,
-) => Promise<void>
 const DocPageActions: React.FC<{
-  docPath: string
-  childPages: ITreeNode[]
-  pageData: SourceDocPageData
   syncStatus?: FileChangeType
-  onSavePage?: DocPageSaveHandler
 }> =
-function ({ childPages, syncStatus, docPath, pageData, onSavePage }) {
-  const occupiedChildPaths = childPages.map(c => path.basename(c.id as string));
-  const newID: string = occupiedChildPaths.indexOf('new-page') >= 0
-    ? `new-page-${occupiedChildPaths.filter(p => p.startsWith('new-page')).length}`
-    : 'new-page';
+function ({ syncStatus }) {
 
   return (
     <ButtonGroup minimal>
-      {onSavePage
-        ? <>
-            <Button
-              small disabled={!onSavePage || childPages.length > 0 || docPath.split('/').length <= 1}
-              icon="remove"
-              title="Remove page"
-              onClick={() => {
-                onSavePage!(docPath, pageData, null);
-              }}
-            />
-            <Button
-              small icon="add"
-              title="Add page"
-              disabled={!onSavePage}
-              onClick={() => {
-                onSavePage!(`${docPath}/${newID}`, null, {
-                  title: "New page",
-                  media: [],
-                  redirectFrom: [],
-                });
-              }}
-            />
-          </>
-        : null}
-      <Button
-        disabled
-        small
+      <Icon
         title={syncStatus !== 'unchanged' && syncStatus !== undefined
           ? `This page has been ${syncStatus} since last synchronization`
           : undefined}
