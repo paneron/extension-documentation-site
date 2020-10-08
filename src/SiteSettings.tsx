@@ -6,8 +6,9 @@ import yaml from 'js-yaml';
 import { css, jsx } from '@emotion/core';
 import React from 'react';
 import { ObjectDataset, RepositoryViewProps } from "@riboseinc/paneron-extension-kit/types";
-import { Button, FormGroup, InputGroup, NonIdealState } from '@blueprintjs/core';
+import { Button, ButtonGroup, FormGroup, InputGroup, NonIdealState } from '@blueprintjs/core';
 import { DocSiteSettingsHook } from './hooks';
+import { getGHAWorkflowChangeset } from './ghaWorkflow';
 
 
 export interface SiteSettings {
@@ -44,6 +45,19 @@ export const SiteSettings: React.FC<{
   const [_isBusy, setBusy] = React.useState(false);
 
   const isBusy: boolean = originalSettings.isUpdating || _isBusy;
+
+  async function handleWriteGHAWorkflow(remove = false) {
+    if (isBusy || settings === null) { return; }
+
+    const changeset = getGHAWorkflowChangeset(settings, remove);
+
+    setBusy(true);
+    try {
+      await changeObjects(changeset, "Write GHA workflow", true);
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function handleSaveSettings(newSettings: SiteSettings) {
     if (isBusy) { return; }
@@ -135,12 +149,19 @@ export const SiteSettings: React.FC<{
           onChange={(evt: React.FormEvent<HTMLInputElement>) =>
             updateEditedSettings({ ...settings, urlPrefix: evt.currentTarget.value })} />
       </FormGroup>
-      <Button
-          disabled={isBusy || editedSettings === null}
-          onClick={() => editedSettings !== null ? handleSaveSettings(editedSettings) : void 0}
-          intent={editedSettings !== null ? 'success' : undefined}>
-        Save site settings
-      </Button>
+      <ButtonGroup fill css={css`& > * { white-space: nowrap; }`}>
+        <Button
+            disabled={isBusy || editedSettings === null}
+            onClick={() => editedSettings !== null ? handleSaveSettings(editedSettings) : void 0}
+            intent={editedSettings !== null ? 'success' : undefined}>
+          Save site settings
+        </Button>
+        <Button
+            disabled={isBusy}
+            onClick={() => handleWriteGHAWorkflow()}>
+          Write GHA workflow
+        </Button>
+      </ButtonGroup>
     </>
   );
 };
