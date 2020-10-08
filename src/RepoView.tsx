@@ -114,7 +114,13 @@ function ({ React, setTimeout, useObjectData, useObjectSyncStatus, changeObjects
     attachToParent([prev]);
     return prev;
 
-  }, { id: 'docs', label: "Docs", isExpanded: true, childNodes: [], data: { filePath: '/docs/index.yaml' } } as ITreeNode<DocPageNodeData>);
+  }, {
+    id: 'docs',
+    label: "Docs",
+    isExpanded: true,
+    childNodes: [],
+    data: { filePath: '/docs/index.yaml' },
+  } as ITreeNode<DocPageNodeData>);
   //log.debug("Node hierarchy", nodeTree)
 
   async function handleApplyChangeset(changeset: ObjectChangeset, message: string) {
