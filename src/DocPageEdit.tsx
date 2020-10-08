@@ -14,6 +14,7 @@ import {
   H6, IFormGroupProps, InputGroup, Intent, NumericInput,
   Menu,
   Popover,
+  Tag,
 } from '@blueprintjs/core';
 
 import { DocPageDataHook } from './hooks';
@@ -100,14 +101,12 @@ function ({
   const url: string = editedURL || path;
 
   React.useEffect(() => {
-    //setTimeout(() => {
-      if (onUpdatePath && path === editedURL) {
-        updateEditedURL(null);
-      }
-      if (onSave && editedPage !== null && JSON.stringify(originalPage) === JSON.stringify(editedPage)) {
-        updateEditedPage(null);
-      }
-    //}, 5);
+    if (onUpdatePath && path === editedURL) {
+      updateEditedURL(null);
+    }
+    if (onSave && editedPage !== null && JSON.stringify(originalPage) === JSON.stringify(editedPage)) {
+      updateEditedPage(null);
+    }
   }, [editedURL, JSON.stringify(originalPage), JSON.stringify(editedPage)]);
 
   const editedURLOccupiedByPageWithTitle: string | null = editedURL
@@ -156,7 +155,9 @@ function ({
       if ((page?.redirectFrom || [])[idx] !== undefined) {
         updateEditedPage(update(page, {
           redirectFrom: {
-            $set: update(page!.redirectFrom, { [idx]: { $set: evt.currentTarget.value }}),
+            $set: update(page!.redirectFrom, {
+              [idx]: { $set: evt.currentTarget.value.replace(/^\//, '').replace(/\/$/, '')
+            }}),
           },
         }));
       }
@@ -201,6 +202,8 @@ function ({
   //log.debug("Doc page data", pageData);
 
   //log.debug("Doc page contents", contents);
+
+  const redirects = page?.redirectFrom || [];
 
   return (
     <div css={css`flex: 1; display: flex; flex-flow: column nowrap; overflow: hidden;`}>
@@ -249,7 +252,7 @@ function ({
             </ControlGroup>
           </FieldWithErrors>
 
-          {(page?.redirectFrom || []).map((redirect, idx) => {
+          {redirects.map((redirect, idx) => {
             const editedRedirectOccupiedBy = editedPage === null
               ? null
               : getPageTitleAtPath(redirect);
@@ -257,7 +260,10 @@ function ({
             return (
               <FieldWithErrors
                   key={`redirect-${idx}`}
-                  label={`Redirect from (${idx + 1}): /`}
+                  helperText={idx === redirects.length - 1
+                    ? "Make sure to include the URL path prefix (e.g., docs/). No leading and trailing slashes."
+                    : undefined}
+                  label={<>{redirects.length > 1 ? <Tag round minimal>{idx + 1}</Tag> : null} Redirect from: /</>}
                   errors={editedRedirectOccupiedBy === null || editedRedirectOccupiedBy === originalPage?.title
                     ? []
                     : [{ message: `This path is occupied by page “${editedRedirectOccupiedBy}”` }]}
