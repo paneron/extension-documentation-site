@@ -285,7 +285,7 @@ jobs:
   "dependencies": {
     "@reach/router": "^1.2.1",
     "@riboseinc/aperis-doc-pages": "^1.0.0-pre8",
-    "@riboseinc/react-static-plugin-aperis-doc-pages": "^1.0.5",
+    "@riboseinc/react-static-plugin-aperis-doc-pages": "^1.0.7",
     "axios": "^0.19.0",
     "chroma-js": "^2.1.0",
     "react": "^16.9.0",
