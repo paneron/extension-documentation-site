@@ -69,8 +69,14 @@ const FieldWithErrors: React.FC<{
 };
 
 
+const DOCS_ROOT = 'docs';
+
+
 export const DocPageEdit: PluginFC<{
   path: string
+
+  urlPrefix: string
+
   useObjectData: RepositoryViewProps["useObjectData"]
   useDocPageData: DocPageDataHook
 
@@ -83,7 +89,8 @@ export const DocPageEdit: PluginFC<{
   mediaData: { [filename: string]: any }
 }> =
 function ({
-    React, setTimeout, useObjectData, useDocPageData, path,
+    React, setTimeout, useObjectData, useDocPageData,
+    path, urlPrefix,
     onSave, onUpdatePath, onAddSubpage, onDelete,
     getPageTitleAtPath,
 }) {
@@ -97,8 +104,8 @@ function ({
   const page: SourceDocPageData | null = (onSave ? editedPage : null) || originalPage || null;
 
   const [editedURL, updateEditedURL] = React.useState<null | string>(null);
-  const canEditURL = onUpdatePath !== undefined && editedPage === null && path !== 'docs';
-  const url: string = editedURL || path;
+  const canEditURL = onUpdatePath !== undefined && editedPage === null && path !== DOCS_ROOT;
+  const url: string = (editedURL || path).replace(DOCS_ROOT, urlPrefix);
 
   React.useEffect(() => {
     if (onUpdatePath && path === editedURL) {
@@ -231,7 +238,7 @@ function ({
           </FieldWithErrors>
 
           <FieldWithErrors
-              label={`URL path: ${nodePath.dirname(`/${url}`).replace(/\/$/, '')}/`}
+              label={`URL path: ${nodePath.dirname(`/${url}`).replace(/^\//, '').replace(/\/$/, '')}/`}
               errors={editedURLOccupiedByPageWithTitle === null
                 ? []
                 : [{ message: `This path is occupied by page “${editedURLOccupiedByPageWithTitle}”` }]}
@@ -243,7 +250,7 @@ function ({
                 value={nodePath.basename(url)}
                 disabled={!canEditURL}
                 onChange={(evt: React.FormEvent<HTMLInputElement>) =>
-                  updateEditedURL(`${nodePath.dirname(url)}/${evt.currentTarget.value}`)
+                  updateEditedURL(`${nodePath.dirname(path)}/${evt.currentTarget.value}`)
                 }
               />
               <Popover content={pageMenu}>
@@ -261,9 +268,13 @@ function ({
               <FieldWithErrors
                   key={`redirect-${idx}`}
                   helperText={idx === redirects.length - 1
-                    ? "Make sure to include the URL path prefix (e.g., docs/). No leading and trailing slashes."
+                    ? "Do not include global URL prefix, and add no leading and trailing slashes."
                     : undefined}
-                  label={<>{redirects.length > 1 ? <Tag round minimal>{idx + 1}</Tag> : null} Redirect from: /</>}
+                  label={<>
+                    {redirects.length > 1 ? <Tag round minimal>{idx + 1}</Tag> : null}
+                    &ensp;
+                    Redirect from: /{urlPrefix ? `${urlPrefix}/` : ''}
+                  </>}
                   errors={editedRedirectOccupiedBy === null || editedRedirectOccupiedBy === originalPage?.title
                     ? []
                     : [{ message: `This path is occupied by page “${editedRedirectOccupiedBy}”` }]}
