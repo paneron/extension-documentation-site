@@ -10,6 +10,7 @@ import {
 
 import { SourceDocPageData } from './types';
 import { filepathCandidates, filepathToDocsPath, getDocPagePaths, isDocumentationPage } from './util';
+import { FOOTER_BANNER_FILENAME, HEADER_BANNER_FILENAME, SETTINGS_FILENAME, SiteSettings } from './SiteSettings';
 
 
 
@@ -21,6 +22,9 @@ export type DocPageDataHook = (useObjectData: ObjectDataHook, paths: string[]) =
 
 export type DocPageMediaHook = (useObjectData: ObjectDataHook, pagePath: string, allFiles: string[]) =>
   ReturnType<ObjectDataHook>;
+
+export type DocSiteSettingsHook = (useObjectData: ObjectDataHook) =>
+  ValueHook<SiteSettings | null>
 
 
 export const useDocPageSyncStatus: DocPageSyncStatusHook = (useObjectSyncStatus) => {
@@ -90,3 +94,41 @@ export const useDocPageMedia: DocPageMediaHook = (useObjectData, docPath, allFil
 
   return mediaData;
 };
+
+
+export const useSiteSettings: DocSiteSettingsHook = (useObjectData) => {
+  const settingsHook = useObjectData({
+    [SETTINGS_FILENAME]: 'utf-8',
+    [HEADER_BANNER_FILENAME]: 'utf-8',
+    [FOOTER_BANNER_FILENAME]: 'utf-8',
+  });
+
+  const hasSettingFiles: boolean = [SETTINGS_FILENAME, HEADER_BANNER_FILENAME, FOOTER_BANNER_FILENAME].
+  find(fn => settingsHook.value[fn] === undefined || settingsHook.value[fn] === null) === undefined;
+
+  if (!hasSettingFiles) {
+    return { ...settingsHook, value: null  };
+  }
+
+  const settingsFileData = yaml.load(settingsHook.value[SETTINGS_FILENAME]!.value as string);
+
+  const settingsFormatIsCorrect: boolean = (
+    (settingsFileData.title || '') !== '' &&
+    settingsFileData.urlPrefix !== undefined &&
+    (settingsFileData.footerBannerLink || '') !== '');
+
+  if (!settingsFormatIsCorrect) {
+    return { ...settingsHook, value: null  };
+  }
+
+  const originalSettings: SiteSettings = {
+    title: settingsFileData.title,
+    urlPrefix: settingsFileData.urlPrefix,
+    footerBannerLink: settingsFileData.footerBannerLink,
+
+    headerBannerBlob: settingsHook.value[HEADER_BANNER_FILENAME]!.value as string,
+    footerBannerBlob: settingsHook.value[FOOTER_BANNER_FILENAME]!.value as string,
+  };
+
+  return { ...settingsHook, value: originalSettings };
+}

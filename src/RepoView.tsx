@@ -7,25 +7,44 @@ import log from 'electron-log';
 import React from 'react';
 import { css, jsx } from '@emotion/core';
 
-import { ButtonGroup, Colors, Icon, ITreeNode, NonIdealState, Tree } from '@blueprintjs/core';
+import {
+  Button, ButtonGroup, Classes, Colors, Icon,
+  ITreeNode, NonIdealState, Spinner, Tree,
+} from '@blueprintjs/core';
 
 import { FileChangeType, ObjectChangeset, RepositoryViewProps } from '@riboseinc/paneron-extension-kit/types';
 
 import { SourceDocPageData } from './types';
-import { useDocPageData, useDocPageMedia, useDocPageSyncStatus } from './hooks';
+import { useDocPageData, useDocPageMedia, useDocPageSyncStatus, useSiteSettings } from './hooks';
 import { DocPageEdit } from './DocPageEdit';
 import { getAddPageChangeset, getDeletePageChangeset, getMovePathChangeset, getUpdatePageChangeset } from './update';
 import { filepathCandidates, getDocPagePaths } from './util';
+import { SiteSettings } from './SiteSettings';
 
 
 Object.assign(console, log);
 
 
-export const RepositoryView: React.FC<RepositoryViewProps> =
-function ({ React, setTimeout, useObjectData, useObjectSyncStatus, changeObjects }) {
+const FIRST_PAGE_STUB: SourceDocPageData = {
+  title: "Home",
+  redirectFrom: [],
+  media: [],
+};
+
+
+export const RepositoryView: React.FC<RepositoryViewProps> = ({ ...props }) => {
+  return <AperisSite {...props} />;
+}
+
+const AperisSite: React.FC<RepositoryViewProps> =
+function ({ React, requestFileFromFilesystem, useObjectData, useObjectSyncStatus, changeObjects }) {
   //log.debug("Rendering Doc site repository view");
 
   const [isBusy, setBusy] = React.useState(false);
+
+  const settingsData = useSiteSettings(useObjectData);
+
+  const urlPrefix = settingsData.value?.urlPrefix || '';
 
   const [selectedPagePath, selectPage] = React.useState<string>('docs');
 
@@ -50,12 +69,6 @@ function ({ React, setTimeout, useObjectData, useObjectSyncStatus, changeObjects
   const selectedPageHasChildren = selectedPagePath
     ? selectedPageChildren.length > 0
     : false;
-
-  //React.useEffect(() => {
-  //  if (allPageData.value[selectedPagePath] === undefined) {
-  //    selectPage('docs');
-  //  }
-  //}, [selectedPagePath, Object.keys(allPageData.value)]);
 
   function handleNodeClick(n: ITreeNode) {
     selectPage(n.id as string);
@@ -229,21 +242,61 @@ function ({ React, setTimeout, useObjectData, useObjectSyncStatus, changeObjects
     selectPage(newPath);
   }
 
+  if ((syncStatus.isUpdating || allPageData.isUpdating) && Object.keys(allPageData.value).length < 1) {
+    return <NonIdealState icon={<Spinner />} description="Loading page data…" />;
+
+  } else if (Object.keys(allPageData.value).length < 1) {
+    return <NonIdealState
+      icon="clean"
+      title="There are no documentation pages yet."
+      description={
+        <Button disabled={isBusy} intent="success" large onClick={async () => {
+          setBusy(true);
+          try {
+            await changeObjects({
+              'docs/index.yaml': {
+                encoding: 'utf-8' as const,
+                oldValue: null,
+                newValue: yaml.dump(FIRST_PAGE_STUB, { noRefs: true }),
+              },
+            }, "Create top-level page");
+          } finally {
+            setBusy(false);
+          }
+        }}>
+          Create top-level page
+        </Button>
+      }
+    />
+  }
+
   return (
     <div css={css`flex: 1; display: flex; flex-flow: row nowrap; overflow: hidden;`}>
-      <div css={css`width: 30vw; background: ${Colors.WHITE}`}>
-        <Tree
-          contents={[nodeTree]}
-          onNodeClick={!isBusy ? handleNodeClick : undefined} />
+      <div css={css`width: 30vw; overflow: hidden; display: flex; flex-flow: column nowrap;`}>
+        <div css={css`flex: 1; overflow-y: auto; background: ${Colors.WHITE};`}>
+          <Tree
+            contents={[nodeTree]}
+            onNodeClick={!isBusy ? handleNodeClick : undefined} />
+        </div>
+        <div css={css`overflow-y: auto; padding: .5rem 1rem;`}>
+          <SiteSettings
+            React={React}
+            changeObjects={changeObjects}
+            originalSettings={settingsData}
+            requestFileFromFilesystem={requestFileFromFilesystem}
+          />
+        </div>
       </div>
       {selectedPagePath
-        ? <div css={css`flex: 1; display: flex; flex-flow: column nowrap;`}>
+        ? <div css={css`flex: 1; display: flex; flex-flow: column nowrap;`} className={Classes.ELEVATION_2}>
             <DocPageEdit
               React={React}
               key={selectedPagePath}
               useDocPageData={useDocPageData}
               useObjectData={useObjectData}
               path={selectedPagePath}
+
+              urlPrefix={urlPrefix}
 
               onSave={!isBusy ? handleSavePage : undefined}
               onUpdatePath={selectedPageHasChildren ? undefined : handleChangePath}
