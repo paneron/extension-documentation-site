@@ -278,7 +278,7 @@ function ({ React, requestFileFromFilesystem, useObjectData, useObjectSyncStatus
             contents={[nodeTree]}
             onNodeClick={!isBusy ? handleNodeClick : undefined} />
         </div>
-        <div css={css`overflow-y: auto; padding: .5rem 1rem;`}>
+        <div css={css`overflow-y: auto; padding: 1rem 1rem .5rem 1rem;`}>
           <SiteSettings
             React={React}
             changeObjects={changeObjects}
