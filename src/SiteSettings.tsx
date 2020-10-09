@@ -178,8 +178,6 @@ const SVGFileInputWithPreview: React.FC<{
   requestFileFromFilesystem: RepositoryViewProps["requestFileFromFilesystem"]
 }> = function ({ React, requestFileFromFilesystem, text, contentsBlob, onContentsChange }) {
 
-  log.silly("Rendering SVG file input with preview");
-
   const [previewDataURL, setPreviewDataURL] = React.useState<null | string>(null);
 
   React.useEffect(() => {
