@@ -11,6 +11,7 @@ import { MenuBarProps, MenuButtonFactory } from '@riboseinc/reprose/author/menu'
 import code from '@riboseinc/reprose/features/code/author';
 import blocky from '@riboseinc/reprose/features/blocky/author';
 import paragraph from '@riboseinc/reprose/features/paragraph/author';
+import admonition from '@riboseinc/reprose/features/admonition/author';
 import lists from '@riboseinc/reprose/features/lists/author';
 
 import BaseEditor, { EditorProps } from '@riboseinc/reprose/author/editor';
@@ -29,6 +30,8 @@ const ICONS: Record<string, IconName> = {
   join_up: 'collapse-all',
   code: 'code',
   code_block: 'code-block',
+  admonition: 'info-sign',
+  admonition_caption: 'header',
 };
 
 const ButtonFactory: MenuButtonFactory = ({ state, dispatch }) => function ({ key, item }) {
@@ -77,6 +80,7 @@ const contentsEditorProps = featuresToEditorProps([
   blocky,
   paragraph,
   lists,
+  admonition,
   code({ allowBlocks: true }),
 ], contentsSchema, {
   MenuBar,
