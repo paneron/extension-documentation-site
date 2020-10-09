@@ -23,7 +23,7 @@ import { Schema } from 'prosemirror-model';
 
 const ICONS: Record<string, IconName> = {
   plain: 'paragraph',
-  bullet_list: 'list',
+  bullet_list: 'properties',
   ordered_list: 'numbered-list',
   lift: 'chevron-left',
   join_up: 'collapse-all',
