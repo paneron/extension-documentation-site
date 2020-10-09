@@ -31,8 +31,12 @@ export const useDocPageSyncStatus: DocPageSyncStatusHook = (useObjectSyncStatus)
   const result = useObjectSyncStatus();
   const objects = result.value;
 
-  const filteredObjects = Object.entries(objects).
+  const filteredFiles: Record<string, FileChangeType> = Object.entries(objects).
     filter(([atPath, _]) => isDocumentationPage(atPath)).
+    map(([atPath, state]) => ({ [atPath]: state })).
+    reduce((p, c) => ({ ...p, ...c }), {});
+
+  const asDocPaths = Object.entries(filteredFiles).
     map(([path, changeStatus]) => ({
       [filepathToDocsPath(path)]: changeStatus,
     })).
@@ -40,8 +44,8 @@ export const useDocPageSyncStatus: DocPageSyncStatusHook = (useObjectSyncStatus)
 
   return {
     ...result,
-    value: filteredObjects,
-    asFiles: objects,
+    value: asDocPaths,
+    asFiles: filteredFiles,
   };
 };
 
