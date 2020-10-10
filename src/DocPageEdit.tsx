@@ -10,11 +10,9 @@ import React from 'react';
 import { PluginFC, RepositoryViewProps } from '@riboseinc/paneron-extension-kit/types';
 
 import {
-  Button, ButtonGroup, Colors, ControlGroup, FormGroup,
-  H6, IFormGroupProps, InputGroup, Intent, NumericInput,
-  Menu,
-  Popover,
-  Tag,
+  Button, ButtonGroup, Colors, ControlGroup,
+  H6, InputGroup, NumericInput,
+  Menu, Popover, Tag,
 } from '@blueprintjs/core';
 
 import { DocPageDataHook } from './hooks';
@@ -22,9 +20,10 @@ import { isProseMirrorStructure, SourceDocPageData } from './types';
 
 import { PROSEMIRROR_DOC_STUB } from './util';
 import { ContentsEditor, MenuWrapper, SummaryEditor } from './prosemirror/editor';
+import { FieldWithErrors, PartialValidator } from './formValidation';
 
 
-function validateDocPageData(page: SourceDocPageData): ValidationResult<Partial<SourceDocPageData>> {
+const validateDocPageData: PartialValidator<SourceDocPageData> = (page) => {
   const title = (page.title || '').trim() === ''
     ? [{ message: "Title must not be empty" }]
     : [];
@@ -33,40 +32,6 @@ function validateDocPageData(page: SourceDocPageData): ValidationResult<Partial<
     title,
   }, title.length < 1];
 }
-
-type ValidationErrors<T> = { [key in keyof T]: ValidationError[] }
-type ValidationResult<T> = [errors: ValidationErrors<T>, isValid: boolean]
-
-interface ValidationError {
-  message: string
-}
-
-const FieldErrors: React.FC<{ errors: ValidationError[], className?: string }> = function ({ errors, className }) {
-  return <ul css={css`margin: 0; padding-left: 1.25em;`} className={className}>
-    {errors.map(e => <li>{e.message}</li>)}
-  </ul>;
-};
-
-const FieldWithErrors: React.FC<{
-  errors: ValidationError[]
-} & IFormGroupProps> = function ({ errors, helperText, children, ...formGroupProps }) {
-  const effectiveHelperText: JSX.Element | undefined = helperText !== undefined || errors.length > 0
-    ? <>
-        {helperText || null}
-        {errors.length > 0 ? <FieldErrors errors={errors} /> : null}
-      </>
-    : undefined;
-
-  const intent: Intent | undefined = errors.length > 0 ? 'danger' : undefined;
-
-  return <FormGroup
-      helperText={effectiveHelperText}
-      css={css`margin: 0;`}
-      intent={intent}
-      {...formGroupProps}>
-    {children}
-  </FormGroup>;
-};
 
 
 const DOCS_ROOT = 'docs';

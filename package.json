@@ -27,7 +27,7 @@
     "@blueprintjs/select": "^3.13.3",
     "@emotion/core": "^10.0.35",
     "@riboseinc/paneron-extension-kit": "^1.0.0-alpha6",
-    "@riboseinc/reprose": "^1.0.0-alpha3",
+    "@riboseinc/reprose": "^1.0.0-alpha5",
     "@types/fs-extra": "^9.0.1",
     "@types/js-yaml": "^3.12.5",
     "@types/node": "^14.11.2",
