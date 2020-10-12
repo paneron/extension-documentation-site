@@ -204,6 +204,9 @@ function ({
 
           <FieldWithErrors
               label={`URL path: ${nodePath.dirname(`/${url}`).replace(/^\//, '').replace(/\/$/, '')}/`}
+              helperText={!onUpdatePath
+                ? "URL cannot be edited for any page that contains subpages, and for the topmost-level page."
+                : undefined}
               errors={editedURLOccupiedByPageWithTitle === null
                 ? []
                 : [{ message: `This path is occupied by page “${editedURLOccupiedByPageWithTitle}”` }]}
