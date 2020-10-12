@@ -190,7 +190,7 @@ const MenuBar: React.FC<MenuBarProps> = function ({ menu, view }) {
 
 export const MenuWrapper: React.FC<Record<never, never>> = function ({ children }) {
   return (
-    <div css={css`display: flex; flex-flow: row wrap; padding: .5rem 1rem;`}>
+    <div css={css`display: flex; flex-flow: row wrap; padding: .5rem 1rem; background: ${Colors.LIGHT_GRAY3}`}>
       {children}
     </div>
   );
