@@ -317,7 +317,7 @@ function ({
               onClick={handleSave}>
             Commit new version
           </Button>
-          <Button disabled={editedPage === null} onClick={handleDiscard}>
+          <Button disabled={editedPage === null || isBusy} onClick={handleDiscard}>
             Discard
           </Button>
         </ButtonGroup>
