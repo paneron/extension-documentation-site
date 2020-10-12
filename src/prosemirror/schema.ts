@@ -2,6 +2,7 @@ import code from '@riboseinc/reprose/features/code/schema';
 import admonition from '@riboseinc/reprose/features/admonition/schema';
 import emphasis from '@riboseinc/reprose/features/inline-emphasis/schema';
 import paragraph from '@riboseinc/reprose/features/paragraph/schema';
+import section from '@riboseinc/reprose/features/section/schema';
 import lists from '@riboseinc/reprose/features/lists/schema';
 import links from '@riboseinc/reprose/features/links/schema';
 
@@ -12,6 +13,7 @@ export const contentsSchema = featuresToSchema([
   lists,
   admonition,
   emphasis,
+  section,
   links(),
   code({ allowBlocks: true }),
 ]);

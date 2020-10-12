@@ -15,6 +15,7 @@ import { MenuBarProps, MenuButtonFactory } from '@riboseinc/reprose/author/menu'
 import code from '@riboseinc/reprose/features/code/author';
 import blocky from '@riboseinc/reprose/features/blocky/author';
 import paragraph from '@riboseinc/reprose/features/paragraph/author';
+import section from '@riboseinc/reprose/features/section/author';
 import emphasis from '@riboseinc/reprose/features/inline-emphasis/author';
 import admonition from '@riboseinc/reprose/features/admonition/author';
 import lists from '@riboseinc/reprose/features/lists/author';
@@ -57,6 +58,7 @@ export const ContentsEditor: React.FC<FinalEditorProps> = function (props) {
           features={[
             blocky,
             paragraph,
+            section,
             lists,
             admonition,
             emphasis,
@@ -130,6 +132,23 @@ function (props) {
                   font-weight: bold;
                 }
 
+                section {
+                  padding: 0 0 0 1.5rem;
+                  margin: 1em 0 0 -1.5rem;
+                  border-left: .75rem solid ${Colors.LIGHT_GRAY4};
+                  section {
+                    border-left-color: ${Colors.LIGHT_GRAY3};
+                    section {
+                      border-left-color: ${Colors.LIGHT_GRAY2};
+                    }
+                  }
+
+                  > header {
+                    font-size: 140%;
+                    margin-bottom: 10px;
+                  }
+                }
+
               `}
             `}
             {...props}
@@ -155,6 +174,8 @@ const ITEM_BUTTON_PROPS: Record<string, IButtonProps> = {
   admonition_caption: { icon: 'header'},
   link: { icon: 'link' },
   isoStandardLink: { icon: 'link', text: "ISO" },
+  section: { icon: 'insert', text: 'Subsection' },
+  section_header: { icon: 'header' },
 };
 
 const ButtonFactory: MenuButtonFactory = ({ state, dispatch }) => function ({ key, item }) {
