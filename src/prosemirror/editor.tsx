@@ -170,7 +170,7 @@ const ITEM_BUTTON_PROPS: Record<string, IButtonProps> = {
   join_up: { icon: 'collapse-all' },
   code: { icon: 'code' },
   code_block: { icon: 'code-block' },
-  admonition: { icon: 'info-sign' },
+  admonition: { icon: 'lightbulb' },
   admonition_caption: { icon: 'header'},
   link: { icon: 'link' },
   isoStandardLink: { icon: 'link', text: "ISO" },
