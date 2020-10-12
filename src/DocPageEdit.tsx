@@ -219,7 +219,7 @@ function ({
                 }
               />
               <Popover content={pageMenu}>
-                <Button icon="more" intent={editedURL !== null ? 'success' : undefined}/>
+                <Button intent={editedURL !== null ? 'success' : undefined}>Structure…</Button>
               </Popover>
             </ControlGroup>
           </FieldWithErrors>
@@ -382,11 +382,11 @@ const PageURLMenu: React.FC<{
   onDelete?: () => Promise<void>
 }> = function ({ onChangeURL, onAddRedirect, onAddSubpage, onDelete }) {
   return <Menu>
-    <Menu.Item disabled={!onAddSubpage} onClick={onAddSubpage} text="Add subpage" />
-    <Menu.Item disabled={!onAddRedirect} onClick={onAddRedirect} text="Redirect another path to this page" />
-    <Menu.Item disabled={!onChangeURL} onClick={() => onChangeURL!(true)} text="Change URL and leave redirect" />
+    <Menu.Item icon="document" disabled={!onAddSubpage} onClick={onAddSubpage} text="Add subpage" />
+    <Menu.Item icon="data-lineage" disabled={!onAddRedirect} onClick={onAddRedirect} text="Redirect another path to this page" />
+    <Menu.Item icon="flows" disabled={!onChangeURL} onClick={() => onChangeURL!(true)} text="Change URL and leave redirect" />
     <Menu.Divider title="Advanced" />
-    <Menu.Item intent="danger" disabled={!onChangeURL} onClick={() => onChangeURL!(false)} text="Change URL without redirect" />
-    <Menu.Item intent="danger" disabled={!onDelete} onClick={onDelete} text="Delete this page without redirect" />
+    <Menu.Item icon="edit" intent="danger" disabled={!onChangeURL} onClick={() => onChangeURL!(false)} text="Change URL without redirect" />
+    <Menu.Item icon="trash" intent="danger" disabled={!onDelete} onClick={onDelete} text="Delete this page without redirect" />
   </Menu>
 };
