@@ -132,20 +132,40 @@ function (props) {
                   font-weight: bold;
                 }
 
+                [data-section-editor] {
+                  position: relative;
+
+                  > input::before {
+                    content: "ID: ";
+                  }
+
+                  > input {
+                    position: absolute;
+                    border: none;
+                    padding: 0;
+                    color: ${Colors.GRAY4};
+                  }
+                }
+
                 section {
                   padding: 0 0 0 1.5rem;
                   margin: 1em 0 0 -1.5rem;
+
+                  &::before {
+                    content: "ID: “" attr(id) "”";
+                  }
+
+                  > header {
+                    font-size: 140%;
+                    margin-bottom: 10px;
+                  }
+
                   border-left: .75rem solid ${Colors.LIGHT_GRAY4};
                   section {
                     border-left-color: ${Colors.LIGHT_GRAY3};
                     section {
                       border-left-color: ${Colors.LIGHT_GRAY2};
                     }
-                  }
-
-                  > header {
-                    font-size: 140%;
-                    margin-bottom: 10px;
                   }
                 }
 
