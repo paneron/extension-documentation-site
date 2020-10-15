@@ -71,7 +71,7 @@ export const ContentsEditor: React.FC<FinalEditorProps> = function (props) {
               },
               floatingLinkEditorClassName: `
                 ${Classes.ELEVATION_4}
-                ${css({ position: 'fixed', borderRadius: '0 .3rem .3rem .3rem', overflow: 'hidden' })}
+                ${css({ zIndex: 3, position: 'fixed', borderRadius: '0 .3rem .3rem .3rem', overflow: 'hidden' })}
               `,
             }),
           ]}
