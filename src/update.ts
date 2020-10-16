@@ -9,7 +9,9 @@ import { DocPageMediaHook } from './hooks';
 import { filepathCandidates } from './util';
 
 
-function getUpdateMediaChangeset(
+/* Can be used to move files corresponding to given media items to another directory,
+   or to delete them (e.g., if the page is getting deleted). */
+export function getUpdateMediaChangeset(
   media: SourceDocPageData["media"],
   mediaData: ReturnType<DocPageMediaHook>["value"],
   sourceDir: string,
