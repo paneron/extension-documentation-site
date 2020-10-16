@@ -50,6 +50,8 @@ function ({ React, requestFileFromFilesystem, useObjectData, useObjectSyncStatus
 
   const syncStatus = useDocPageSyncStatus(useObjectSyncStatus);
 
+  const allFiles = Object.keys(useObjectSyncStatus().value);
+
   //log.debug("Page sync status", syncStatus.value)
 
   const allPageData = useDocPageData(
@@ -61,7 +63,7 @@ function ({ React, requestFileFromFilesystem, useObjectData, useObjectSyncStatus
   const selectedPageMediaData = useDocPageMedia(
     useObjectData,
     selectedPagePath,
-    Object.keys(syncStatus));
+    allFiles);
 
   const selectedPageChildren = Object.keys(allPageData.value).
   filter(path => path.startsWith(`${selectedPagePath}/`)) || [];
@@ -160,8 +162,6 @@ function ({ React, requestFileFromFilesystem, useObjectData, useObjectSyncStatus
 
     let changeset: ObjectChangeset;
     let verb: string;
-
-    const allFiles = Object.keys(syncStatus.asFiles);
 
     if (oldPage !== null && newPage !== null) {
       const filePaths = getDocPagePaths(docPath, allFiles);
