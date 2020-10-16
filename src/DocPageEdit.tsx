@@ -54,7 +54,7 @@ export const DocPageEdit: PluginFC<{
   mediaData: { [filename: string]: any }
 }> =
 function ({
-    React, setTimeout, useObjectData, useDocPageData,
+    React, useObjectData, useDocPageData,
     path, urlPrefix,
     onSave, onUpdatePath, onAddSubpage, onDelete,
     getPageTitleAtPath,
@@ -181,10 +181,8 @@ function ({
     <div css={css`flex: 1; display: flex; flex-flow: column nowrap; overflow: hidden;`}>
 
       <PageSection
-          setTimeout={setTimeout}
           expanded={!contentsExpanded}
           onExpand={(state) => expandContents(!state)}
-          React={React}
           title="Meta">
         <div css={css`flex-shrink: 0; padding: .5rem 1rem; overflow: hidden; display: flex; flex-flow: column nowrap; & > :not(:last-child) { margin-bottom: .5rem; }`}>
           <FieldWithErrors errors={validationErrors.title || []}>
@@ -295,9 +293,7 @@ function ({
       </PageSection>
 
       <PageSection
-          setTimeout={setTimeout}
           title="Contents"
-          React={React}
           expanded={contentsExpanded}
           onExpand={expandContents}
           css={css`flex: 1; min-height: 30vh`}>
@@ -337,7 +333,7 @@ function ({
 };
 
 
-const PageSection: PluginFC<{
+const PageSection: React.FC<{
   title: string | JSX.Element
   expanded?: boolean
   onExpand?: (state: boolean | undefined) => void
