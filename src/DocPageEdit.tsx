@@ -12,7 +12,7 @@ import { PluginFC, RepositoryViewProps } from '@riboseinc/paneron-extension-kit/
 import {
   Button, ButtonGroup, Colors, ControlGroup,
   H6, InputGroup, NumericInput,
-  Menu, Popover, Tag,
+  Menu, Popover, Tag, ContextMenu,
 } from '@blueprintjs/core';
 
 import { DocPageDataHook } from './hooks';
@@ -39,7 +39,7 @@ const DOCS_ROOT = 'docs';
 
 export const DocPageEdit: PluginFC<{
   path: string
-
+  mediaDir: string
   urlPrefix: string
 
   useObjectData: RepositoryViewProps["useObjectData"]
@@ -48,6 +48,8 @@ export const DocPageEdit: PluginFC<{
   onSave?: (path: string, oldPage: SourceDocPageData, newDoc: SourceDocPageData) => Promise<void>
   onUpdatePath?: (oldPath: string, newPath: string, leaveRedirect: boolean) => Promise<void>
   onAddSubpage?: () => Promise<void>
+  onAddMedia?: () => Promise<string[]>
+  onDeleteMedia?: (idx: number) => Promise<void>
   onDelete?: () => Promise<void>
 
   getPageTitleAtPath: (path: string) => string | null
@@ -57,6 +59,7 @@ function ({
     React, useObjectData, useDocPageData,
     path, urlPrefix,
     onSave, onUpdatePath, onAddSubpage, onDelete,
+    mediaDir, onAddMedia, onDeleteMedia,
     getPageTitleAtPath,
 }) {
   const [contentsExpanded, expandContents] = React.useState<boolean | undefined>(true);
@@ -122,6 +125,12 @@ function ({
     await onUpdatePath(path, editedURL, withRedirect);
   }
 
+  function handleAddRedirect() {
+    if (!page) { return; }
+    updateEditedPage({
+      ...page,
+      redirectFrom: [ ...(page.redirectFrom || []), '' ] });
+  }
   function getHandleEditRedirect(idx: number) {
     return function handleEditRedirect(evt: React.FormEvent<HTMLInputElement>) {
       if ((page?.redirectFrom || [])[idx] !== undefined) {
@@ -146,11 +155,37 @@ function ({
       }
     };
   }
-  function handleAddRedirect() {
-    if (!page) { return; }
-    updateEditedPage({
-      ...page,
-      redirectFrom: [ ...(page.redirectFrom || []), '' ] });
+  async function handleAddMedia() {
+    if (!page || !onAddMedia) { return; }
+    await onAddMedia();
+  }
+  function getHandleDeleteMedia(idx: number) {
+    return async function handleDeleteMedia() {
+      if ((page?.media || [])[idx] !== undefined && onDeleteMedia !== undefined) {
+        await onDeleteMedia(idx);
+      }
+    }
+  }
+  async function handleChooseImage(e: MouseEvent): Promise<string | undefined> {
+    return new Promise((resolve, reject) => {
+      function _selectImage(idx: number) {
+        const imageFilename = media[idx];
+        //const imagePath = nodePath.join(mediaDir, imageFilename);
+        resolve(imageFilename);
+      }
+
+      const menu = (
+        <Menu>
+          {media.map((filename, idx) =>
+            <Menu.Item key={idx} onClick={() => _selectImage(idx)} text={filename} />)}
+        </Menu>
+      );
+
+      ContextMenu.show(
+        menu,
+        { left: e.clientX, top: e.clientY },
+        () => reject(undefined));
+    });
   }
 
   const pageMenu = <PageURLMenu
@@ -174,6 +209,7 @@ function ({
   //log.debug("Doc page data", pageData);
 
   const redirects = page?.redirectFrom || [];
+  const media = page?.media || [];
 
   return (
     <div css={css`flex: 1; display: flex; flex-flow: column nowrap; overflow: hidden;`}>
@@ -269,6 +305,37 @@ function ({
               onValueChange={(val) => updateEditedPage({ ...page!, importance: val })}
             />
           </FieldWithErrors>
+
+          <div css={contentsExpanded ? css`display: none` : undefined}>
+            {media.map((mediaFileName, idx) => {
+              return (
+                <FieldWithErrors
+                    key={`media-${idx}`}
+                    helperText={idx === media.length - 1
+                      ? "You can use media in page contents by clicking “Insert image” in editor toolbar."
+                      : undefined}
+                    label={<>
+                      {media.length > 1 ? <Tag round minimal>{idx + 1}</Tag> : null}
+                      &ensp;
+                      Media:
+                    </>}
+                    errors={[]}
+                    /* TODO: Mark unused media */
+                    /*errors={editedRedirectOccupiedBy === null || editedRedirectOccupiedBy === originalPage?.title
+                      ? []
+                      : [{ message: `This path is occupied by page “${editedRedirectOccupiedBy}”` }]}*/
+                    inline
+                    css={css`.bp3-form-content { flex: 1; }`}>
+                  <ControlGroup>
+                    <InputGroup fill value={mediaFileName} disabled />
+                    <Button disabled={!canEdit} title="Delete media from page" onClick={getHandleDeleteMedia(idx)}>Delete</Button>
+                  </ControlGroup>
+                </FieldWithErrors>
+              );
+            })}
+
+            <Button disabled={!onAddMedia || !canEdit} onClick={handleAddMedia} css={css`margin: 1rem`}>Add media</Button>
+          </div>
         </div>
 
         <H6
@@ -300,8 +367,12 @@ function ({
           React={React}
           css={css`flex: 1;`}
           key={`${path}=${JSON.stringify(initialContents || {})}-${resetCounter}`}
-          onChange={canEdit ?
-            ((newDoc) => updateEditedPage({ ...page!, contents: { doc: newDoc } }))
+          mediaDir={mediaDir}
+          onChooseImageClick={(canEdit && (page?.media || []).length > 0)
+            ? handleChooseImage
+            : undefined}
+          onChange={canEdit
+            ? ((newDoc) => updateEditedPage({ ...page!, contents: { doc: newDoc } }))
             : undefined}
           initialDoc={initialContents || PROSEMIRROR_DOC_STUB}
           logger={log}

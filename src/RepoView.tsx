@@ -1,8 +1,9 @@
 /** @jsx jsx */
 /** @jsxFrag React.Fragment */
 
-import yaml from 'js-yaml';
 import path from 'path';
+import yaml from 'js-yaml';
+import update from 'immutability-helper';
 import log from 'electron-log';
 import React from 'react';
 import { css, jsx } from '@emotion/core';
@@ -17,7 +18,7 @@ import { FileChangeType, ObjectChangeset, RepositoryViewProps } from '@riboseinc
 import { SourceDocPageData } from './types';
 import { useDocPageData, useDocPageMedia, useDocPageSyncStatus, useSiteSettings } from './hooks';
 import { DocPageEdit } from './DocPageEdit';
-import { getAddPageChangeset, getDeletePageChangeset, getMovePathChangeset, getUpdatePageChangeset } from './update';
+import { getAddMediaChangeset, getAddPageChangeset, getDeletePageChangeset, getMovePathChangeset, getUpdateMediaChangeset, getUpdatePageChangeset } from './update';
 import { filepathCandidates, getDocPagePaths } from './util';
 import { SiteSettings } from './SiteSettings';
 
@@ -37,7 +38,11 @@ export const RepositoryView: React.FC<RepositoryViewProps> = ({ ...props }) => {
 }
 
 const AperisSite: React.FC<RepositoryViewProps> =
-function ({ React, requestFileFromFilesystem, useObjectData, useObjectSyncStatus, changeObjects }) {
+function ({
+    React, requestFileFromFilesystem, makeAbsolutePath,
+    useObjectData, useObjectSyncStatus,
+    changeObjects,
+  }) {
   //log.debug("Rendering Doc site repository view");
 
   const [isBusy, setBusy] = React.useState(false);
@@ -151,6 +156,90 @@ function ({ React, requestFileFromFilesystem, useObjectData, useObjectSyncStatus
     } finally {
       setBusy(false);
     }
+  }
+
+  async function handleAddMedia(): Promise<string[]> {
+    if (!selectedPageData) {
+      throw new Error("Selected page data could not be found");
+    }
+    const filePaths = getDocPagePaths(selectedPagePath, allFiles);
+    const selectedFiles = await requestFileFromFilesystem({
+      prompt: "Choose images to add to this page’s media",
+      allowMultiple: false,
+      filters: [{ name: "PNG and JPEG images", extensions: ['png', 'jpeg', 'jpg'] }],
+    });
+
+    const newPage = {
+      ...selectedPageData,
+      media: [
+        ...(selectedPageData.media || []),
+        ...Object.keys(selectedFiles).map(f => path.basename(f)),
+      ],
+    };
+    const pageChangeset = getUpdatePageChangeset(
+      filePaths,
+      selectedPageHasChildren,
+      newPage)
+
+    const mediaChangeset = getAddMediaChangeset(
+      path.dirname(filePaths.pathInUse),
+      selectedFiles);
+
+    const changeset = {
+      ...pageChangeset,
+      ...mediaChangeset,
+    };
+
+    await handleApplyChangeset(changeset, `Add media to ${selectedPagePath}`);
+
+    return Object.keys(selectedFiles).map(f => path.basename(f));
+  }
+
+  async function handleDeleteMedia(idx: number) {
+    if (!selectedPageData) {
+      throw new Error("Selected page data could not be found");
+    }
+
+    const mediaFilename = (selectedPageData.media || [])[idx];
+
+    const filePaths = getDocPagePaths(selectedPagePath, allFiles);
+    const mediaPath = path.join(path.dirname(filePaths.pathInUse), mediaFilename);
+    const mediaData = selectedPageMediaData.value[mediaPath];
+
+    if (mediaFilename === undefined) {
+      log.error("Deleting media: no media at given position", idx);
+      throw new Error("Cannot delete media: item at given position does not exist");
+    }
+
+    if (mediaData === null || mediaData === undefined) {
+      log.error("Deleting media: cannot read data for media at given position", idx, mediaPath, selectedPageMediaData.value, mediaData);
+      throw new Error("Cannot delete media: cannot read data for media at given position");
+    }
+
+    const newPage = update(selectedPageData, {
+      media: {
+        $set: update(selectedPageData!.media, { $splice: [[idx, 1]] }),
+      },
+    })
+
+    const pageChangeset = getUpdatePageChangeset(
+      filePaths,
+      selectedPageHasChildren,
+      newPage,
+    );
+
+    const mediaChangeset = getUpdateMediaChangeset(
+      [mediaFilename],
+      { [mediaPath]: mediaData },
+      path.dirname(filePaths.pathInUse),
+      null);
+
+    const changeset = {
+      ...pageChangeset,
+      ...mediaChangeset,
+    };
+
+    return await handleApplyChangeset(changeset, `Delete media #${idx} from ${selectedPagePath}`);
   }
 
   function handleSavePage(
@@ -270,6 +359,14 @@ function ({ React, requestFileFromFilesystem, useObjectData, useObjectSyncStatus
     />
   }
 
+  let mediaDir: string | undefined
+  try {
+    mediaDir = makeAbsolutePath(path.dirname(getDocPagePaths(selectedPagePath, Object.keys(syncStatus.asFiles)).pathInUse));
+  } catch (e) {
+    log.error("Unable to get mediaDir", e);
+    mediaDir = undefined;
+  }
+
   return (
     <div css={css`flex: 1; display: flex; flex-flow: row nowrap; overflow: hidden;`}>
       <div css={css`width: 30vw; overflow: hidden; display: flex; flex-flow: column nowrap;`}>
@@ -287,19 +384,24 @@ function ({ React, requestFileFromFilesystem, useObjectData, useObjectSyncStatus
           />
         </div>
       </div>
-      {selectedPagePath
+      {mediaDir !== undefined
         ? <div css={css`flex: 1; display: flex; flex-flow: column nowrap;`} className={Classes.ELEVATION_2}>
             <DocPageEdit
+              key={`${selectedPagePath}-${(selectedPageData?.media || []).length}`}
+
               React={React}
-              key={selectedPagePath}
+              setTimeout={setTimeout}
               useDocPageData={useDocPageData}
               useObjectData={useObjectData}
-              path={selectedPagePath}
 
+              path={selectedPagePath}
               urlPrefix={urlPrefix}
 
+              mediaDir={mediaDir}
+
               onSave={!isBusy ? handleSavePage : undefined}
-              setTimeout={setTimeout}
+              onAddMedia={!isBusy ? handleAddMedia : undefined}
+              onDeleteMedia={!isBusy ? handleDeleteMedia : undefined}
               onUpdatePath={(selectedPageHasChildren || isBusy) ? undefined : handleChangePath}
               onAddSubpage={!isBusy ? (async () => {
                 const occupiedChildPaths = selectedPageChildren.map(c => path.basename(c));

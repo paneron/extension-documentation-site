@@ -19,11 +19,16 @@ import section from '@riboseinc/reprose/features/section/author';
 import emphasis from '@riboseinc/reprose/features/inline-emphasis/author';
 import admonition from '@riboseinc/reprose/features/admonition/author';
 import lists from '@riboseinc/reprose/features/lists/author';
-import links, { DEFAULT_SCHEMAS, LinkAttributeEditorProps, LinkSchema } from '@riboseinc/reprose/features/links/author';
+import links, {
+  DEFAULT_SCHEMAS,
+  LinkAttributeEditorProps,
+  LinkSchema,
+} from '@riboseinc/reprose/features/links/author';
+import image from '@riboseinc/reprose/features/image/author';
 
 import BaseEditor, { EditorProps } from '@riboseinc/reprose/author/editor';
 
-import { contentsSchema, summarySchema } from './schema';
+import { getContentsSchema, getImageFeatureOptions, summarySchema } from './schema';
 import { LinkNodeAttrs } from '@riboseinc/reprose/features/links/schema';
 import { FieldWithErrors } from '../formValidation';
 import { RepositoryViewProps } from '@riboseinc/paneron-extension-kit/types';
@@ -50,12 +55,21 @@ export const SummaryEditor: React.FC<FinalEditorProps> = function (props) {
   );
 };
 
-export const ContentsEditor: React.FC<FinalEditorProps> = function (props) {
+export const ContentsEditor: React.FC<FinalEditorProps & {
+  mediaDir: string,
+  onChooseImageClick?: (e: MouseEvent) => Promise<string | undefined>,
+}> = function (props) {
+
+  const schema = getContentsSchema({ protocol: `file://`, imageDir: props.mediaDir });
+
+  async function requestImageURL(e: MouseEvent) {
+    return props.onChooseImageClick!(e);
+  }
   return (
     <ClassNames>
       {({ css, cx }) => (
         <Editor
-          schema={contentsSchema}
+          schema={schema}
           features={[
             blocky,
             paragraph,
@@ -64,6 +78,12 @@ export const ContentsEditor: React.FC<FinalEditorProps> = function (props) {
             admonition,
             emphasis,
             code({ allowBlocks: true }),
+            ...(props.onChooseImageClick
+                  ? [image({
+                      requestImageURL,
+                      ...getImageFeatureOptions(`file://`, props.mediaDir),
+                    })]
+                  : []),
             links({
               LinkEditor,
               schemas: {
@@ -117,6 +137,34 @@ function (props) {
                     margin-bottom: .5rem;
                   }
                 }
+
+                figure {
+                  margin: 0;
+                  padding: 1rem;
+                  background: ${Colors.LIGHT_GRAY4};
+                  position: relative;
+
+                  img {
+                    max-width: 50%;
+                  }
+
+                  figcaption {
+                    font-weight: bold;
+                  }
+
+                  [data-image-editor] {
+                    input {
+                      margin: 1rem;
+                      position: absolute;
+                      top: .5rem;
+                      left: .5rem;
+                      padding: .5rem;
+                      background: rgba(255, 255, 255, 0.8);
+                      border: none;
+                    }
+                  }
+                }
+
                 [data-admonition-type=seealso] {
                   border-left-color: ${Colors.BLUE5};
                 }
@@ -206,7 +254,7 @@ const ButtonFactory: MenuButtonFactory = ({ state, dispatch }) => function ({ ke
       <AnchorButton
         active={item.active?.(state)}
         disabled={item.enable?.(state) === false}
-        onClick={() => item.run(state, dispatch)}
+        onClick={(evt: React.MouseEvent) => item.run(state, dispatch, evt.nativeEvent)}
         key={key}
         {...buttonProps} />
     </Tooltip>
