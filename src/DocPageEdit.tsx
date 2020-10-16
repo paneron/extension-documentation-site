@@ -173,8 +173,6 @@ function ({
       : null;
   //log.debug("Doc page data", pageData);
 
-  //log.debug("Doc page contents", contents);
-
   const redirects = page?.redirectFrom || [];
 
   return (
