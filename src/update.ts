@@ -12,30 +12,30 @@ import { filepathCandidates } from './util';
 function getUpdateMediaChangeset(
   media: SourceDocPageData["media"],
   mediaData: ReturnType<DocPageMediaHook>["value"],
-  fromDir: string,
-  toDir: string | null,
+  sourceDir: string,
+  targetDir: string | null,
 ): ObjectChangeset {
   let changeset: ObjectChangeset = {};
 
-  log.debug("Getting update media changeset", media, mediaData, fromDir, toDir);
+  log.debug("Getting update media changeset", media, mediaData, sourceDir, targetDir);
 
   for (const relativeMediaFilename of media) {
-    const fileData = mediaData[path.join(fromDir, relativeMediaFilename)];
+    const fileData = mediaData[path.join(sourceDir, relativeMediaFilename)];
 
     if (fileData === null) {
       log.error("Cannot find media", fileData);
       throw new Error("Cannot find media data to move");
     }
 
-    if (toDir !== null) {
-      changeset[path.join(toDir, relativeMediaFilename)] = {
+    if (targetDir !== null) {
+      changeset[path.join(targetDir, relativeMediaFilename)] = {
         encoding: fileData.encoding,
         oldValue: null,
         newValue: fileData.value,
       } as ObjectChange;
     }
 
-    changeset[path.join(fromDir, relativeMediaFilename)] = {
+    changeset[path.join(sourceDir, relativeMediaFilename)] = {
       encoding: fileData.encoding,
       oldValue: fileData.value,
       newValue: null,
