@@ -2,11 +2,35 @@ import log from 'electron-log';
 import yaml from 'js-yaml';
 import path from 'path';
 
-import { ObjectChange, ObjectChangeset } from '@riboseinc/paneron-extension-kit/types';
+import { ObjectChange, ObjectChangeset, ObjectDataset } from '@riboseinc/paneron-extension-kit/types';
 
 import { SourceDocPageData } from './types';
 import { DocPageMediaHook } from './hooks';
 import { filepathCandidates } from './util';
+
+
+export function getAddMediaChangeset(
+  targetDir: string,
+  objectDataset: ObjectDataset,
+): ObjectChangeset {
+  let changeset: ObjectChangeset = {};
+
+  for (const [objectPath, objectData] of Object.entries(objectDataset)) {
+    if (objectData === null) {
+      continue;
+    }
+
+    const relativeMediaFilename = path.basename(objectPath);
+    const targetPath = path.join(targetDir, relativeMediaFilename);
+
+    changeset[targetPath] = {
+      encoding: objectData.encoding,
+      oldValue: null,
+      newValue: objectData.value,
+    } as ObjectChange;
+  }
+  return changeset;
+}
 
 
 /* Can be used to move files corresponding to given media items to another directory,
