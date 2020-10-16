@@ -2,9 +2,7 @@ export function isDocumentationPage(atPath: string) {
   return (
     atPath.startsWith('/docs/') &&
     atPath !== '/meta.yaml' &&
-    !atPath.endsWith('.DS_Store') &&
-    !atPath.endsWith('.svg') &&
-    !atPath.endsWith('.mp4'));
+    atPath.endsWith('.yaml'));
 }
 
 
