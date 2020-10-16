@@ -84,19 +84,19 @@ export const useDocPageData: DocPageDataHook = (useObjectData, paths) => {
 export const useDocPageMedia: DocPageMediaHook = (useObjectData, docPath, allFiles) => {
   const page = useDocPageData(useObjectData, [docPath]).value[docPath] || null;
 
-  const mediaData = useObjectData(
-    (page?.media || []).
+  const request = (page?.media || []).
     map(mediaFile => {
-      const dir = getDocPagePaths(docPath, allFiles);
+      const dir = path.dirname(getDocPagePaths(docPath, allFiles).pathInUse);
+      const filePath = `/${path.join(dir, mediaFile)}`;
       if (mediaFile.endsWith('.svg')) {
-        return { [path.join(dir.pathInUse, mediaFile)]: 'utf-8' as const } as ObjectDataRequest;
+        return { [filePath]: 'utf-8' as const } as ObjectDataRequest;
       } else {
-        return { [path.join(dir.pathInUse, mediaFile)]: undefined } as ObjectDataRequest;
+        return { [filePath]: undefined } as ObjectDataRequest;
       }
     }).
-    reduce((p, c) => ({ ...p, ...c }), {}));
+    reduce((p, c) => ({ ...p, ...c }), {});
 
-  return mediaData;
+  return useObjectData(request);
 };
 
 
