@@ -369,7 +369,7 @@ function ({
 
   return (
     <div css={css`flex: 1; display: flex; flex-flow: row nowrap; overflow: hidden;`}>
-      <div css={css`width: 30vw; overflow: hidden; display: flex; flex-flow: column nowrap;`}>
+      <div css={css`width: 30vw; min-width: 350px; overflow: hidden; display: flex; flex-flow: column nowrap;`}>
         <div css={css`flex: 1; overflow-y: auto; background: ${Colors.WHITE};`}>
           <Tree
             contents={[nodeTree]}
