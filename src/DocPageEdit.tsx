@@ -280,6 +280,7 @@ function ({
         </H6>
 
         <SummaryEditor
+          React={React}
           css={contentsExpanded ? css`display: none` : undefined}
           key={`${path}=${JSON.stringify(initialSummary || {})}-${resetCounter}`}
           onChange={canEdit ?
@@ -296,6 +297,7 @@ function ({
           onExpand={expandContents}
           css={css`flex: 1; min-height: 30vh`}>
         <ContentsEditor
+          React={React}
           css={css`flex: 1;`}
           key={`${path}=${JSON.stringify(initialContents || {})}-${resetCounter}`}
           onChange={canEdit ?
