@@ -251,7 +251,7 @@ function ({
                     disabled={!canEdit}
                     onChange={getHandleEditRedirect(idx)}
                   />
-                  <Button title="Delete this redirect" onClick={getHandleDeleteRedirect(idx)}>Delete</Button>
+                  <Button disabled={!canEdit} title="Delete this redirect" onClick={getHandleDeleteRedirect(idx)}>Delete</Button>
                 </ControlGroup>
               </FieldWithErrors>
             );
