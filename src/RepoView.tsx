@@ -299,9 +299,9 @@ function ({ React, requestFileFromFilesystem, useObjectData, useObjectSyncStatus
               urlPrefix={urlPrefix}
 
               onSave={!isBusy ? handleSavePage : undefined}
-              onUpdatePath={selectedPageHasChildren ? undefined : handleChangePath}
               setTimeout={setTimeout}
-              onAddSubpage={async () => {
+              onUpdatePath={(selectedPageHasChildren || isBusy) ? undefined : handleChangePath}
+              onAddSubpage={!isBusy ? (async () => {
                 const occupiedChildPaths = selectedPageChildren.map(c => path.basename(c));
                 const newID: string = occupiedChildPaths.indexOf('new-page') >= 0
                   ? `new-page-${occupiedChildPaths.filter(p => p.startsWith('new-page')).length}`
@@ -311,8 +311,8 @@ function ({ React, requestFileFromFilesystem, useObjectData, useObjectSyncStatus
                   media: [],
                   redirectFrom: [],
                 });
-              }}
-              onDelete={selectedPageHasChildren ? undefined : async () => {
+              }) : undefined}
+              onDelete={(selectedPageHasChildren || isBusy) ? undefined : async () => {
                 await handleSavePage!(selectedPagePath, selectedPageData, null);
               }}
 
