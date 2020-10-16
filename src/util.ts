@@ -22,6 +22,11 @@ export function filepathCandidates(forDocPath: string): [asNested: string, asFla
 }
 
 
+/* Returns candidates from `filepathCandidates()`, but specified each under its key
+   (“flat” path for /path/to/doc/page.yaml, “nested” path for /path/to/doc/page/index.yaml),
+   with `pathInUse` key containing the actually used path
+   (checked using given `allFiles`, which should contain a list of all files in the repo
+   relative to its root with leading slash). */
 export function getDocPagePaths
 (docPath: string, allFiles: string[]):
 { pathInUse: string, nestedPath: string, flatPath: string } {
