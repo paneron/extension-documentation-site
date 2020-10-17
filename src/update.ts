@@ -115,6 +115,19 @@ export function getAddPageChangeset(
 ): ObjectChangeset {
   const parentDataYAML = yaml.dump(parentPageData, { noRefs: true });
 
+  let mediaChangeset: ObjectChangeset;
+
+  if (parentFilePaths.pathInUse === parentFilePaths.flatPath) {
+    mediaChangeset = getUpdateMediaChangeset(
+      parentPageData.media,
+      parentPageMediaData,
+      path.dirname(parentFilePaths.flatPath),
+      path.dirname(parentFilePaths.nestedPath));
+
+  } else {
+    mediaChangeset = {};
+  }
+
   return {
     [newPageFilePath]: {
       encoding: 'utf-8',
@@ -131,11 +144,7 @@ export function getAddPageChangeset(
       oldValue: undefined,
       newValue: null,
     },
-    ...getUpdateMediaChangeset(
-      parentPageData.media,
-      parentPageMediaData,
-      path.dirname(parentFilePaths.flatPath),
-      path.dirname(parentFilePaths.nestedPath)),
+    ...mediaChangeset,
   };
 }
 
