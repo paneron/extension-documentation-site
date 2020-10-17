@@ -202,14 +202,14 @@ function ({
 
     const mediaFilename = (selectedPageData.media || [])[idx];
 
-    const filePaths = getDocPagePaths(selectedPagePath, allFiles);
-    const mediaPath = path.join(path.dirname(filePaths.pathInUse), mediaFilename);
-    const mediaData = selectedPageMediaData.value[mediaPath];
-
     if (mediaFilename === undefined) {
       log.error("Deleting media: no media at given position", idx);
       throw new Error("Cannot delete media: item at given position does not exist");
     }
+
+    const filePaths = getDocPagePaths(selectedPagePath, allFiles);
+    const mediaPath = path.join(path.dirname(filePaths.pathInUse), mediaFilename);
+    const mediaData = selectedPageMediaData.value[mediaPath];
 
     if (mediaData === null || mediaData === undefined) {
       log.error("Deleting media: cannot read data for media at given position",
