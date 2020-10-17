@@ -1,13 +1,13 @@
-export function isDocumentationPage(atPath: string) {
+export function isDocumentationPage(atFilePath: string) {
   return (
-    atPath.startsWith('/docs/') &&
-    atPath !== '/meta.yaml' &&
-    atPath.endsWith('.yaml'));
+    atFilePath.startsWith('/docs/') &&
+    atFilePath !== '/meta.yaml' &&
+    atFilePath.endsWith('.yaml'));
 }
 
 
 export function filepathToDocsPath(filepath: string): string {
-  return filepath.replace('/index.yaml', '').replace('.yaml', '');
+  return filepath.replace('/index.yaml', '').replace('.yaml', '').replace(/^\//, '');
 }
 
 
@@ -15,9 +15,10 @@ export function filepathToDocsPath(filepath: string): string {
    This is more for supporting repositories created outside the extension,
    since we always use `index.yaml` here. */
 export function filepathCandidates(forDocPath: string): [asNested: string, asFlat: string] {
+  const pathWithoutLeadingSlash = forDocPath.replace(/^\//, '');
   return [
-    `${forDocPath}/index.yaml`,
-    `${forDocPath}.yaml`,
+    `/${pathWithoutLeadingSlash}/index.yaml`,
+    `/${pathWithoutLeadingSlash}.yaml`,
   ];
 }
 
@@ -26,14 +27,15 @@ export function filepathCandidates(forDocPath: string): [asNested: string, asFla
    (“flat” path for /path/to/doc/page.yaml, “nested” path for /path/to/doc/page/index.yaml),
    with `pathInUse` key containing the actually used path
    (checked using given `allFiles`, which should contain a list of all files in the repo
-   relative to its root with leading slash). */
+   relative to its root with leading slash).
+   Paths will have leading slashes. */
 export function getDocPagePaths
 (docPath: string, allFiles: string[]):
 { pathInUse: string, nestedPath: string, flatPath: string } {
 
   const [nestedPath, flatPath] = filepathCandidates(docPath);
 
-  if (allFiles.filter(p => p === `/${nestedPath}` || p === `/${flatPath}`).length !== 1) {
+  if (allFiles.filter(p => p === nestedPath || p === flatPath).length !== 1) {
     throw new Error("Could not reliably find existing doc page path");
   }
 
@@ -42,9 +44,9 @@ export function getDocPagePaths
     flatPath: flatPath,
   };
 
-  if (allFiles.indexOf(`/${nestedPath}`) >= 0) {
+  if (allFiles.indexOf(nestedPath) >= 0) {
     return { ...result, pathInUse: nestedPath };
-  } else if (allFiles.indexOf(`/${flatPath}`) >= 0) {
+  } else if (allFiles.indexOf(flatPath) >= 0) {
     return { ...result, pathInUse: flatPath };
   } else {
     throw new Error("Could not find existing doc page path");

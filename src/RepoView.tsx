@@ -61,7 +61,7 @@ function ({
 
   const allPageData = useDocPageData(
     useObjectData,
-    Object.keys(syncStatus.value).map(path => path.substring(1)));
+    Object.keys(syncStatus.value));
 
   const selectedPageData: SourceDocPageData | null = allPageData.value[selectedPagePath] || null;
 
@@ -104,7 +104,7 @@ function ({
       hasCaret: false,
       isExpanded: true,
       secondaryLabel: <DocPageActions
-        syncStatus={syncStatus.value[`/${effectivePath}`]} />,
+        syncStatus={syncStatus.value[effectivePath]} />,
       data: { importance: data.importance, filePath: path },
     };
   });
@@ -209,7 +209,7 @@ function ({
 
     const filePaths = getDocPagePaths(selectedPagePath, allFiles);
     const mediaPath = path.join(path.dirname(filePaths.pathInUse), mediaFilename);
-    const mediaData = selectedPageMediaData.value[mediaPath];
+    const mediaData = selectedPageMediaData.value[`/${mediaPath}`];
 
     if (mediaData === null || mediaData === undefined) {
       log.error("Deleting media: cannot read data for media at given position",
