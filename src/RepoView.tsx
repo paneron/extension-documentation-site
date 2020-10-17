@@ -170,7 +170,7 @@ function ({
     });
 
     const _files = Object.entries(selectedFiles).
-    map(([p, f]) => ({ [p.split(path.sep).join(path.posix.sep)]: f })).
+    map(([p, f]) => ({ [conformSlashes(p)]: f })).
     reduce((p, c) => ({ ...p, ...c }), {});
 
     const newPage = {
@@ -451,3 +451,15 @@ function ({ syncStatus }) {
     </ButtonGroup>
   );
 };
+
+
+function conformSlashes(path: string): string {
+	const isExtendedLengthPath = /^\\\\\?\\/.test(path);
+	const hasNonAscii = /[^\u0000-\u0080]+/.test(path); // eslint-disable-line no-control-regex
+
+	if (isExtendedLengthPath || hasNonAscii) {
+		return path;
+	}
+
+	return path.replace(/\\/g, '/');
+}
