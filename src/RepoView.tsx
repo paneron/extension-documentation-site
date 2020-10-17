@@ -212,7 +212,8 @@ function ({
     }
 
     if (mediaData === null || mediaData === undefined) {
-      log.error("Deleting media: cannot read data for media at given position", idx, mediaPath, selectedPageMediaData.value, mediaData);
+      log.error("Deleting media: cannot read data for media at given position",
+        idx, mediaPath, selectedPageMediaData.value, mediaData);
       throw new Error("Cannot delete media: cannot read data for media at given position");
     }
 
