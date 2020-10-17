@@ -82,7 +82,7 @@ export const useDocPageData: DocPageDataHook = (useObjectData, paths) => {
 
 
 export const useDocPageMedia: DocPageMediaHook = (useObjectData, docPath, allFiles) => {
-  const page = useDocPageData(useObjectData, [docPath]).value[docPath] || null;
+  const page: SourceDocPageData | null = useDocPageData(useObjectData, [docPath]).value[docPath] || null;
 
   const request = (page?.media || []).
     map(mediaFile => {
