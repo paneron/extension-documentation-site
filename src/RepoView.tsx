@@ -196,7 +196,7 @@ function ({
 
     await handleApplyChangeset(changeset, `Add media to ${selectedPagePath}`);
 
-    return Object.keys(selectedFiles).map(f => path.basename(f));
+    return Object.keys(_files).map(f => path.basename(f));
   }
 
   async function handleDeleteMedia(idx: number) {
