@@ -1,6 +1,5 @@
 import path from 'path';
 import yaml from 'js-yaml';
-import log from 'electron-log';
 
 import {
   FileChangeType,
