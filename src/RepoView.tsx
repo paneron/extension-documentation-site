@@ -169,11 +169,15 @@ function ({
       filters: [{ name: "PNG and JPEG images", extensions: ['png', 'jpeg', 'jpg'] }],
     });
 
+    const _files = Object.entries(selectedFiles).
+    map(([p, f]) => ({ [p.split(path.sep).join(path.posix.sep)]: f })).
+    reduce((p, c) => ({ ...p, ...c }), {});
+
     const newPage = {
       ...selectedPageData,
       media: [
         ...(selectedPageData.media || []),
-        ...Object.keys(selectedFiles).map(f => path.basename(f)),
+        ...Object.keys(_files).map(f => path.basename(f)),
       ],
     };
     const pageChangeset = getUpdatePageChangeset(
@@ -183,7 +187,7 @@ function ({
 
     const mediaChangeset = getAddMediaChangeset(
       path.dirname(filePaths.pathInUse),
-      selectedFiles);
+      _files);
 
     const changeset = {
       ...pageChangeset,
