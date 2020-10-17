@@ -1,5 +1,6 @@
 import path from 'path';
 import yaml from 'js-yaml';
+import log from 'electron-log';
 
 import {
   FileChangeType,
@@ -84,17 +85,32 @@ export const useDocPageData: DocPageDataHook = (useObjectData, paths) => {
 export const useDocPageMedia: DocPageMediaHook = (useObjectData, docPath, allFiles) => {
   const page: SourceDocPageData | null = useDocPageData(useObjectData, [docPath]).value[docPath] || null;
 
-  const request = (page?.media || []).
-    map(mediaFile => {
-      const dir = path.dirname(getDocPagePaths(docPath, allFiles).pathInUse);
-      const filePath = `/${path.join(dir, mediaFile)}`;
-      if (mediaFile.endsWith('.svg')) {
-        return { [filePath]: 'utf-8' as const } as ObjectDataRequest;
-      } else {
-        return { [filePath]: undefined } as ObjectDataRequest;
-      }
-    }).
-    reduce((p, c) => ({ ...p, ...c }), {});
+  let dir: string | undefined;
+  try {
+    dir = path.dirname(getDocPagePaths(docPath, allFiles).pathInUse);
+  } catch (e) {
+    dir = undefined;
+  }
+
+  let request: ObjectDataRequest;
+
+  if (page !== null && dir !== undefined) {
+    request = (page.media || []).
+      map(mediaFile => {
+        if (!dir) { return {}; }
+        const filePath = path.join(dir, mediaFile);
+        if (mediaFile.endsWith('.svg')) {
+          return { [filePath]: 'utf-8' as const } as ObjectDataRequest;
+        } else {
+          return { [filePath]: undefined } as ObjectDataRequest;
+        }
+      }).
+      reduce((p, c) => ({ ...p, ...c }), {});
+  } else {
+    request = {};
+  }
+
+  //log.debug("Media data request", page?.media, dir, allFiles, request);
 
   return useObjectData(request);
 };
