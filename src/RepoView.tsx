@@ -402,7 +402,9 @@ function ({
 
               onSave={!isBusy ? handleSavePage : undefined}
               onAddMedia={!isBusy ? handleAddMedia : undefined}
-              onDeleteMedia={!isBusy ? handleDeleteMedia : undefined}
+              onDeleteMedia={(!isBusy && Object.keys(selectedPageMediaData.value).length > 0)
+                ? handleDeleteMedia
+                : undefined}
               onUpdatePath={(selectedPageHasChildren || isBusy) ? undefined : handleChangePath}
               onAddSubpage={!isBusy ? (async () => {
                 const occupiedChildPaths = selectedPageChildren.map(c => path.basename(c));

@@ -328,7 +328,7 @@ function ({
                     css={css`.bp3-form-content { flex: 1; }`}>
                   <ControlGroup>
                     <InputGroup fill value={mediaFileName} disabled />
-                    <Button disabled={!canEdit} title="Delete media from page" onClick={getHandleDeleteMedia(idx)}>Delete</Button>
+                    <Button disabled={!onDeleteMedia || !canEdit || editedPage !== null} title="Delete media from page" onClick={getHandleDeleteMedia(idx)}>Delete</Button>
                   </ControlGroup>
                 </FieldWithErrors>
               );
