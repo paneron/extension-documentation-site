@@ -461,5 +461,5 @@ function conformSlashes(path: string): string {
 		return path;
 	}
 
-	return path.replace(/\\/g, '/');
+	return path.replace(/\\\\/g, '/');
 }
