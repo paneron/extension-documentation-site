@@ -43,7 +43,10 @@ export function getUpdateMediaChangeset(
 ): ObjectChangeset {
   let changeset: ObjectChangeset = {};
 
-  log.debug("Getting update media changeset", media, mediaData, sourceDir, targetDir);
+  if (sourceDir.startsWith('/') || targetDir?.startsWith('/')) {
+    log.warn("Leading slashes when getting update media changeset");
+  }
+  //log.debug("Getting update media changeset", media, mediaData, sourceDir, targetDir);
 
   for (const relativeMediaFilename of media) {
     const fileData = mediaData[path.join(sourceDir, relativeMediaFilename)];
@@ -54,14 +57,14 @@ export function getUpdateMediaChangeset(
     }
 
     if (targetDir !== null) {
-      changeset[path.join(targetDir, relativeMediaFilename)] = {
+      changeset[path.join(targetDir.replace(/^\//, ''), relativeMediaFilename)] = {
         encoding: fileData.encoding,
         oldValue: null,
         newValue: fileData.value,
       } as ObjectChange;
     }
 
-    changeset[path.join(sourceDir, relativeMediaFilename)] = {
+    changeset[path.join(sourceDir.replace(/^\//, ''), relativeMediaFilename)] = {
       encoding: fileData.encoding,
       oldValue: fileData.value,
       newValue: null,
