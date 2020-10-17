@@ -134,8 +134,8 @@ export function getAddPageChangeset(
     ...getUpdateMediaChangeset(
       parentPageData.media,
       parentPageMediaData,
-      path.dirname(parentFilePaths.nestedPath),
-      path.dirname(parentFilePaths.flatPath)),
+      path.dirname(parentFilePaths.flatPath),
+      path.dirname(parentFilePaths.nestedPath)),
   };
 }
 
