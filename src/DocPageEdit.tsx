@@ -334,7 +334,7 @@ function ({
               );
             })}
 
-            <Button disabled={!onAddMedia || !canEdit} onClick={handleAddMedia} css={css`margin: 1rem`}>Add media</Button>
+            <Button disabled={!onAddMedia || !canEdit || editedPage !== null} onClick={handleAddMedia} css={css`margin: 1rem`}>Add media</Button>
           </div>
         </div>
 
