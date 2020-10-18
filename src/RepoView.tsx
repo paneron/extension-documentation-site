@@ -210,7 +210,7 @@ function ({
     }
 
     const filePaths = getDocPagePaths(selectedPagePath, allFiles);
-    const mediaPath = path.join(path.dirname(filePaths.pathInUse), mediaFilename);
+    const mediaPath = path.posix.join(path.dirname(filePaths.pathInUse), mediaFilename);
     const mediaData = selectedPageMediaData.value[`/${mediaPath}`];
 
     if (mediaData === null || mediaData === undefined) {

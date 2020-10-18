@@ -21,7 +21,7 @@ export function getAddMediaChangeset(
     }
 
     const relativeMediaFilename = path.basename(objectPath);
-    const targetPath = path.join(targetDir, relativeMediaFilename);
+    const targetPath = path.posix.join(targetDir, relativeMediaFilename);
 
     changeset[targetPath] = {
       encoding: objectData.encoding,
@@ -49,7 +49,7 @@ export function getUpdateMediaChangeset(
   //log.debug("Getting update media changeset", media, mediaData, sourceDir, targetDir);
 
   for (const relativeMediaFilename of media) {
-    const fileData = mediaData[path.join(sourceDir, relativeMediaFilename)];
+    const fileData = mediaData[path.posix.join(sourceDir, relativeMediaFilename)];
 
     if (fileData === null) {
       log.error("Cannot find media", fileData);
@@ -57,14 +57,14 @@ export function getUpdateMediaChangeset(
     }
 
     if (targetDir !== null) {
-      changeset[path.join(targetDir.replace(/^\//, ''), relativeMediaFilename)] = {
+      changeset[path.posix.join(targetDir.replace(/^\//, ''), relativeMediaFilename)] = {
         encoding: fileData.encoding,
         oldValue: null,
         newValue: fileData.value,
       } as ObjectChange;
     }
 
-    changeset[path.join(sourceDir.replace(/^\//, ''), relativeMediaFilename)] = {
+    changeset[path.posix.join(sourceDir.replace(/^\//, ''), relativeMediaFilename)] = {
       encoding: fileData.encoding,
       oldValue: fileData.value,
       newValue: null,

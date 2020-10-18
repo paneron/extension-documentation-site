@@ -97,7 +97,7 @@ export const useDocPageMedia: DocPageMediaHook = (useObjectData, docPath, allFil
     request = (page.media || []).
       map(mediaFile => {
         if (!dir) { return {}; }
-        const filePath = path.join(dir, mediaFile);
+        const filePath = path.posix.join(dir, mediaFile);
         if (mediaFile.endsWith('.svg')) {
           return { [filePath]: 'utf-8' as const } as ObjectDataRequest;
         } else {
