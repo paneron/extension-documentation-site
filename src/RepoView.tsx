@@ -175,7 +175,7 @@ function ({
       ...selectedPageData,
       media: [
         ...(selectedPageData.media || []),
-        ...Object.keys(selectedFiles).map(f => path.basename(f)),
+        ...Object.keys(selectedFiles),
       ],
     };
     const pageChangeset = getUpdatePageChangeset(
@@ -194,7 +194,7 @@ function ({
 
     await handleApplyChangeset(changeset, `Add media to ${selectedPagePath}`);
 
-    return Object.keys(selectedFiles).map(f => path.basename(f));
+    return Object.keys(selectedFiles);
   }
 
   async function handleDeleteMedia(idx: number) {
