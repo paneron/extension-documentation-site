@@ -169,15 +169,13 @@ function ({
       filters: [{ name: "PNG and JPEG images", extensions: ['png', 'jpeg', 'jpg'] }],
     });
 
-    const _files = Object.entries(selectedFiles).
-    map(([p, f]) => ({ [conformSlashes(p)]: f })).
-    reduce((p, c) => ({ ...p, ...c }), {});
+    log.info("Got files", selectedFiles);
 
     const newPage = {
       ...selectedPageData,
       media: [
         ...(selectedPageData.media || []),
-        ...Object.keys(_files).map(f => path.basename(f)),
+        ...Object.keys(selectedFiles).map(f => path.basename(f)),
       ],
     };
     const pageChangeset = getUpdatePageChangeset(
@@ -187,7 +185,7 @@ function ({
 
     const mediaChangeset = getAddMediaChangeset(
       path.dirname(filePaths.pathInUse),
-      _files);
+      selectedFiles);
 
     const changeset = {
       ...pageChangeset,
@@ -196,7 +194,7 @@ function ({
 
     await handleApplyChangeset(changeset, `Add media to ${selectedPagePath}`);
 
-    return Object.keys(_files).map(f => path.basename(f));
+    return Object.keys(selectedFiles).map(f => path.basename(f));
   }
 
   async function handleDeleteMedia(idx: number) {
@@ -451,15 +449,3 @@ function ({ syncStatus }) {
     </ButtonGroup>
   );
 };
-
-
-function conformSlashes(path: string): string {
-	const isExtendedLengthPath = /^\\\\\?\\/.test(path);
-	const hasNonAscii = /[^\u0000-\u0080]+/.test(path); // eslint-disable-line no-control-regex
-
-	if (isExtendedLengthPath || hasNonAscii) {
-		return path;
-	}
-
-	return path.replace(/\\\\/g, '/');
-}
