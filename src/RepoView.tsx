@@ -65,10 +65,16 @@ function ({
 
   const selectedPageData: SourceDocPageData | null = allPageData.value[selectedPagePath] || null;
 
+  let docPageFilePath: string | undefined;
+  try {
+    docPageFilePath = getDocPagePaths(selectedPagePath, allFiles).pathInUse;
+  } catch (e) {
+    docPageFilePath = undefined;
+  }
   const selectedPageMediaData = useDocPageMedia(
     useObjectData,
-    selectedPagePath,
-    allFiles);
+    selectedPageData?.media || [],
+    docPageFilePath);
 
   const selectedPageChildren = Object.keys(allPageData.value).
   filter(path => path.startsWith(`${selectedPagePath}/`)) || [];

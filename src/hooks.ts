@@ -9,7 +9,7 @@ import {
 } from '@riboseinc/paneron-extension-kit/types';
 
 import { SourceDocPageData } from './types';
-import { filepathCandidates, filepathToDocsPath, getDocPagePaths, isDocumentationPage } from './util';
+import { filepathCandidates, filepathToDocsPath, isDocumentationPage } from './util';
 import { FOOTER_BANNER_FILENAME, HEADER_BANNER_FILENAME, SETTINGS_FILENAME, SiteSettings } from './SiteSettings';
 
 
@@ -20,7 +20,7 @@ export type DocPageSyncStatusHook = (useObjectSyncStatus: ObjectSyncStatusHook) 
 export type DocPageDataHook = (useObjectData: ObjectDataHook, paths: string[]) =>
   ValueHook<Record<string, SourceDocPageData>>;
 
-export type DocPageMediaHook = (useObjectData: ObjectDataHook, pagePath: string, allFiles: string[]) =>
+export type DocPageMediaHook = (useObjectData: ObjectDataHook, media: string[], pageFilePath: string | undefined) =>
   ReturnType<ObjectDataHook>;
 
 export type DocSiteSettingsHook = (useObjectData: ObjectDataHook) =>
@@ -81,20 +81,17 @@ export const useDocPageData: DocPageDataHook = (useObjectData, paths) => {
 };
 
 
-export const useDocPageMedia: DocPageMediaHook = (useObjectData, docPath, allFiles) => {
-  const page: SourceDocPageData | null = useDocPageData(useObjectData, [docPath]).value[docPath] || null;
-
-  let dir: string | undefined;
-  try {
-    dir = path.dirname(getDocPagePaths(docPath, allFiles).pathInUse);
-  } catch (e) {
-    dir = undefined;
-  }
-
+export const useDocPageMedia: DocPageMediaHook = (useObjectData, media, pageFilePath) => {
   let request: ObjectDataRequest;
 
-  if (page !== null && dir !== undefined) {
-    request = (page.media || []).
+  if (!pageFilePath) {
+    log.warn("Cannot load page media data: missing page file path");
+    request = {};
+
+  } else if (media.length > 0) {
+    const dir = path.dirname(pageFilePath);
+
+    request = (media).
       map(mediaFile => {
         if (!dir) { return {}; }
         const filePath = path.posix.join(dir, mediaFile);
@@ -105,6 +102,7 @@ export const useDocPageMedia: DocPageMediaHook = (useObjectData, docPath, allFil
         }
       }).
       reduce((p, c) => ({ ...p, ...c }), {});
+
   } else {
     request = {};
   }
