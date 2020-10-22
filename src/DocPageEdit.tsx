@@ -190,7 +190,7 @@ function ({
   }
 
   const pageMenu = <PageURLMenu
-    onChangeURL={editedURL === null || !canEditURL || editedURLOccupiedByPageWithTitle !== null
+    onChangeURL={!onUpdatePath || editedURL === null || !canEditURL || editedURLOccupiedByPageWithTitle !== null
       ? undefined
       : handleChangePath}
     onAddSubpage={editedPage === null && editedURL === null ? onAddSubpage : undefined}
