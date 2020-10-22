@@ -217,7 +217,7 @@ function ({
 
     const filePaths = getDocPagePaths(selectedPagePath, allFiles);
     const mediaPath = path.posix.join(path.dirname(filePaths.pathInUse), mediaFilename);
-    const mediaData = selectedPageMediaData.value[`/${mediaPath}`];
+    const mediaData = selectedPageMediaData.value[mediaPath.replace(/^\//, '')];
 
     if (mediaData === null || mediaData === undefined) {
       log.error("Deleting media: cannot read data for media at given position",
