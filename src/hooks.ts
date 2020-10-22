@@ -1,6 +1,8 @@
 import path from 'path';
 import yaml from 'js-yaml';
 
+import log from 'electron-log';
+
 import {
   FileChangeType,
   ObjectDataHook,
@@ -107,7 +109,7 @@ export const useDocPageMedia: DocPageMediaHook = (useObjectData, media, pageFile
     request = {};
   }
 
-  //log.debug("Media data request", page?.media, dir, allFiles, request);
+  log.debug("Media data request", media, pageFilePath, request);
 
   return useObjectData(request);
 };
