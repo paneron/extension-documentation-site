@@ -314,7 +314,7 @@ function ({
   }
 
   async function handleChangePath(oldPath: string, newPath: string, leaveRedirect: boolean) {
-    log.debug("Moving doc page", oldPath, newPath);
+    log.debug("Moving doc page", oldPath, newPath, selectedPageMediaData.value);
 
     if (oldPath !== selectedPagePath || !selectedPageData) {
       log.error("Won’t move page: selected page path does not match given");
