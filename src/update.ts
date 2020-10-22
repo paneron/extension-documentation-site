@@ -43,6 +43,15 @@ export function getUpdateMediaChangeset(
 ): ObjectChangeset {
   let changeset: ObjectChangeset = {};
 
+  log.info("Update media changeset", arguments);
+  if (sourceDir === null) {
+    log.error("Update media: Missing source dir", media);
+    throw new Error("Missing source directory");
+  }
+  if (sourceDir === targetDir) {
+    log.warn("Update media: Source and target dirs are the same");
+    return {};
+  }
   if (sourceDir.startsWith('/') || targetDir?.startsWith('/')) {
     log.warn("Leading slashes when getting update media changeset");
   }
@@ -52,19 +61,19 @@ export function getUpdateMediaChangeset(
     const fileData = mediaData[path.posix.join(sourceDir, relativeMediaFilename)];
 
     if (fileData === null) {
-      log.error("Cannot find media", fileData);
+      log.error("Updating media: Cannot find media data", fileData);
       throw new Error("Cannot find media data to move");
     }
 
     if (targetDir !== null) {
-      changeset[path.posix.join(targetDir.replace(/^\//, ''), relativeMediaFilename)] = {
+      changeset[path.posix.join(targetDir, relativeMediaFilename)] = {
         encoding: fileData.encoding,
         oldValue: null,
         newValue: fileData.value,
       } as ObjectChange;
     }
 
-    changeset[path.posix.join(sourceDir.replace(/^\//, ''), relativeMediaFilename)] = {
+    changeset[path.posix.join(sourceDir, relativeMediaFilename)] = {
       encoding: fileData.encoding,
       oldValue: fileData.value,
       newValue: null,

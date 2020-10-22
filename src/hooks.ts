@@ -101,7 +101,7 @@ export const useDocPageMedia: DocPageMediaHook = (useObjectData, docPath, allFil
         if (mediaFile.endsWith('.svg')) {
           return { [filePath]: 'utf-8' as const } as ObjectDataRequest;
         } else {
-          return { [filePath]: undefined } as ObjectDataRequest;
+          return { [filePath]: 'binary' as const } as ObjectDataRequest;
         }
       }).
       reduce((p, c) => ({ ...p, ...c }), {});
