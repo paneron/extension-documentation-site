@@ -315,7 +315,9 @@ function ({
                       ? "You can use media in page contents by clicking “Insert image” in editor toolbar."
                       : undefined}
                     label={<>
-                      {media.length > 1 ? <Tag round minimal>{idx + 1}</Tag> : null}
+                      {media.length > 1
+                        ? <Tag css={css`font-family: monospace`} round minimal>{idx + 1}</Tag>
+                        : null}
                       &ensp;
                       Media:
                     </>}
@@ -325,7 +327,7 @@ function ({
                       ? []
                       : [{ message: `This path is occupied by page “${editedRedirectOccupiedBy}”` }]}*/
                     inline
-                    css={css`.bp3-form-content { flex: 1; }`}>
+                    css={css`margin-bottom: .5em; .bp3-form-content { flex: 1; }`}>
                   <ControlGroup>
                     <InputGroup fill value={mediaFileName} disabled />
                     <Button disabled={!onDeleteMedia || !canEdit || editedPage !== null} title="Delete media from page" onClick={getHandleDeleteMedia(idx)}>Delete</Button>
