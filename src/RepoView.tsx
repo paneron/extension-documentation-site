@@ -430,7 +430,7 @@ function ({
               }}
 
               getPageTitleAtPath={(path) => (occupiedURLs[path] || null)}
-              mediaData={selectedPageMediaData.value}
+              mediaData={selectedPageMediaData}
             />
           </div>
         : <NonIdealState title="No page is selected" />}

@@ -7,12 +7,12 @@ import log from 'electron-log';
 import { css, jsx } from '@emotion/core';
 import React from 'react';
 
-import { PluginFC, RepositoryViewProps } from '@riboseinc/paneron-extension-kit/types';
+import { ObjectDataHook, PluginFC, RepositoryViewProps } from '@riboseinc/paneron-extension-kit/types';
 
 import {
   Button, ButtonGroup, Colors, ControlGroup,
   H6, InputGroup, NumericInput,
-  Menu, Popover, Tag, ContextMenu,
+  Menu, Popover, Tag, ContextMenu, Tooltip, Spinner,
 } from '@blueprintjs/core';
 
 import { DocPageDataHook } from './hooks';
@@ -53,7 +53,7 @@ export const DocPageEdit: PluginFC<{
   onDelete?: () => Promise<void>
 
   getPageTitleAtPath: (path: string) => string | null
-  mediaData: { [filename: string]: any }
+  mediaData: ReturnType<ObjectDataHook>
 }> =
 function ({
     React, useObjectData, useDocPageData,
@@ -61,6 +61,7 @@ function ({
     onSave, onUpdatePath, onAddSubpage, onDelete,
     mediaDir, onAddMedia, onDeleteMedia,
     getPageTitleAtPath,
+    mediaData,
 }) {
   const [contentsExpanded, expandContents] = React.useState<boolean | undefined>(true);
 
@@ -307,41 +308,15 @@ function ({
           </FieldWithErrors>
 
           <div css={contentsExpanded ? css`display: none` : undefined}>
-            {media.map((mediaFileName, idx) => {
-              return (
-                <FieldWithErrors
-                    key={`media-${idx}`}
-                    helperText={idx === media.length - 1
-                      ? "You can use media in page contents by clicking “Insert image” in editor toolbar."
-                      : undefined}
-                    label={<>
-                      {media.length > 1
-                        ? <Tag css={css`font-family: monospace`} round minimal>{idx + 1}</Tag>
-                        : null}
-                      &ensp;
-                      Media:
-                    </>}
-                    errors={[]}
-                    /* TODO: Mark unused media */
-                    /*errors={editedRedirectOccupiedBy === null || editedRedirectOccupiedBy === originalPage?.title
-                      ? []
-                      : [{ message: `This path is occupied by page “${editedRedirectOccupiedBy}”` }]}*/
-                    inline
-                    css={css`margin-bottom: .5em; .bp3-form-content { flex: 1; }`}>
-                  <ControlGroup>
-                    <InputGroup fill value={mediaFileName} disabled />
-                    <Button disabled={!onDeleteMedia || !canEdit || editedPage !== null} title="Delete media from page" onClick={getHandleDeleteMedia(idx)}>Delete</Button>
-                  </ControlGroup>
-                </FieldWithErrors>
-              );
-            })}
-
-            <Button
-                disabled={!onAddMedia || !canEdit || editedPage !== null}
-                onClick={handleAddMedia}
-                css={css`margin: 1rem`}>
-              Add media
-            </Button>
+            <PageMedia
+              media={media}
+              mediaData={mediaData}
+              onDelete={!onDeleteMedia || !canEdit || editedPage !== null
+                ? undefined
+                : (idx) => getHandleDeleteMedia(idx)()}
+              onAdd={!onAddMedia || !canEdit || editedPage !== null
+                ? undefined
+                : handleAddMedia} />
           </div>
         </div>
 
@@ -466,4 +441,55 @@ const PageURLMenu: React.FC<{
     <Menu.Item icon="edit" intent="danger" disabled={!onChangeURL} onClick={() => onChangeURL!(false)} text="Change URL without redirect" />
     <Menu.Item icon="trash" intent="danger" disabled={!onDelete} onClick={onDelete} text="Delete this page without redirect" />
   </Menu>
+};
+
+
+const PageMedia: React.FC<{
+  media: string[]
+  mediaData: ReturnType<ObjectDataHook>
+  onAdd?: () => Promise<void>
+  onDelete?: (idx: number) => Promise<void>
+}> = function ({ media, mediaData, onAdd, onDelete }) {
+  if (mediaData.isUpdating) {
+    return <Spinner />;
+  }
+  return (
+    <>
+      {media.map((mediaFileName, idx) => {
+        const hasFile = Object.keys(mediaData.value).find(p => nodePath.basename(p) === mediaFileName) !== undefined;
+        return (
+          <FieldWithErrors
+              key={`media-${idx}`}
+              helperText={idx === media.length - 1
+                ? "You can use media in page contents by clicking “Insert image” in editor toolbar."
+                : undefined}
+              label={<>
+                {media.length > 1
+                  ? <Tag css={css`font-family: monospace`} round minimal>{idx + 1}</Tag>
+                  : null}
+                &ensp;
+                Media:
+              </>}
+              errors={[]}
+              inline
+              css={css`margin-bottom: .5em; .bp3-form-content { flex: 1; }`}>
+            <ControlGroup>
+              <InputGroup fill value={mediaFileName} disabled />
+              {!hasFile
+                ? <Tooltip content="Media file cannot be found"><Button intent="warning" disabled icon="warning-sign" /></Tooltip>
+                : null}
+              <Button
+                disabled={!onDelete}
+                title="Delete media from page"
+                onClick={() => onDelete ? onDelete(idx) : void 0}>Delete</Button>
+            </ControlGroup>
+          </FieldWithErrors>
+        );
+      })}
+
+      <Button disabled={!onAdd} onClick={onAdd} css={css`margin: 1rem`} icon="media">
+        Add media
+      </Button>
+    </>
+  );
 };
