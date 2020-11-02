@@ -2,7 +2,7 @@
 /** @jsxFrag React.Fragment */
 
 import { ClassNames, css, jsx } from '@emotion/core';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 import {
   AnchorButton, IButtonProps,
@@ -31,7 +31,7 @@ import BaseEditor, { EditorProps } from '@riboseinc/reprose/author/editor';
 import { getContentsSchema, getImageFeatureOptions, summarySchema } from './schema';
 import { LinkNodeAttrs } from '@riboseinc/reprose/features/links/schema';
 import { FieldWithErrors } from '../formValidation';
-import { RepositoryViewProps } from '@riboseinc/paneron-extension-kit/types';
+//import { RepositoryViewProps } from '@riboseinc/paneron-extension-kit/types';
 
 
 // Editors
@@ -40,7 +40,7 @@ type FinalEditorProps = Pick<EditorProps<any>,
   'initialDoc'
 | 'className'
 | 'onChange'
-| 'logger'> & { React: RepositoryViewProps["React"] };
+| 'logger'>;
 
 export const SummaryEditor: React.FC<FinalEditorProps> = function (props) {
   return (
@@ -310,9 +310,9 @@ const urnLinkSchema: LinkSchema = {
 }
 
 
-const LinkEditor: React.FC<LinkAttributeEditorProps> = function ({ React, schemas, attrs, onAttrsChanged }) {
-  const [editedAttrs, updateEditedAttrs] = React.useState<LinkNodeAttrs | null>(null);
-  const [validationErrors, setValidationErrors] = React.useState<string[]>([]);
+const LinkEditor: React.FC<LinkAttributeEditorProps> = function ({ schemas, attrs, onAttrsChanged }) {
+  const [editedAttrs, updateEditedAttrs] = useState<LinkNodeAttrs | null>(null);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const attr = editedAttrs || attrs;
 
   async function handleConfirm() {
@@ -327,7 +327,7 @@ const LinkEditor: React.FC<LinkAttributeEditorProps> = function ({ React, schema
     require('electron').shell.openExternal(url);
   }
 
-  React.useEffect(() => {
+  useEffect(() => {
     (async () => {
 
       setValidationErrors([]);

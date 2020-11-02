@@ -4,7 +4,7 @@
 import log from 'electron-log';
 import yaml from 'js-yaml';
 import { css, jsx } from '@emotion/core';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ObjectDataset, RepositoryViewProps } from "@riboseinc/paneron-extension-kit/types";
 import { Button, ButtonGroup, FormGroup, InputGroup, NonIdealState } from '@blueprintjs/core';
 import { DocSiteSettingsHook } from './hooks';
@@ -33,16 +33,15 @@ export const FOOTER_BANNER_FILENAME = 'footer-banner.svg';
 
 
 export const SiteSettings: React.FC<{
-  React: RepositoryViewProps["React"]
   requestFileFromFilesystem: RepositoryViewProps["requestFileFromFilesystem"]
   changeObjects: RepositoryViewProps["changeObjects"]
   originalSettings: ReturnType<DocSiteSettingsHook>
-}> = function ({ React, requestFileFromFilesystem, originalSettings, changeObjects }) {
-  const [editedSettings, updateEditedSettings] = React.useState<SiteSettings | null>(null);
+}> = function ({ requestFileFromFilesystem, originalSettings, changeObjects }) {
+  const [editedSettings, updateEditedSettings] = useState<SiteSettings | null>(null);
 
   const settings: SiteSettings | null = editedSettings || originalSettings.value;
 
-  const [_isBusy, setBusy] = React.useState(false);
+  const [_isBusy, setBusy] = useState(false);
 
   const isBusy: boolean = originalSettings.isUpdating || _isBusy;
 
@@ -112,7 +111,6 @@ export const SiteSettings: React.FC<{
 
       <FormGroup label="Branding:">
         <SVGFileInputWithPreview
-          React={React}
           requestFileFromFilesystem={requestFileFromFilesystem}
           text="Change header banner image"
           contentsBlob={settings.headerBannerBlob}
@@ -121,7 +119,6 @@ export const SiteSettings: React.FC<{
           }}
         />
         <SVGFileInputWithPreview
-          React={React}
           requestFileFromFilesystem={requestFileFromFilesystem}
           text="Change footer banner image"
           contentsBlob={settings.footerBannerBlob}
@@ -171,16 +168,15 @@ const Buffer = require('electron').remote.getGlobal('Buffer');
 
 
 const SVGFileInputWithPreview: React.FC<{
-  React: RepositoryViewProps["React"]
   text: string
   contentsBlob: string
   onContentsChange: (blob: string) => void
   requestFileFromFilesystem: RepositoryViewProps["requestFileFromFilesystem"]
-}> = function ({ React, requestFileFromFilesystem, text, contentsBlob, onContentsChange }) {
+}> = function ({ requestFileFromFilesystem, text, contentsBlob, onContentsChange }) {
 
-  const [previewDataURL, setPreviewDataURL] = React.useState<null | string>(null);
+  const [previewDataURL, setPreviewDataURL] = useState<null | string>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     log.silly("Converting SVG contents to base64", Buffer);
     let base64string: string;
     try {

@@ -5,9 +5,9 @@ import nodePath from 'path';
 import update from 'immutability-helper';
 import log from 'electron-log';
 import { css, jsx } from '@emotion/core';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
-import { ObjectDataHook, PluginFC, RepositoryViewProps } from '@riboseinc/paneron-extension-kit/types';
+import { ObjectDataHook, RepositoryViewProps } from '@riboseinc/paneron-extension-kit/types';
 
 import {
   Button, ButtonGroup, Colors, ControlGroup,
@@ -37,7 +37,7 @@ const validateDocPageData: PartialValidator<SourceDocPageData> = (page) => {
 const DOCS_ROOT = 'docs';
 
 
-export const DocPageEdit: PluginFC<{
+export const DocPageEdit: React.FC<{
   path: string
   mediaDir: string
   urlPrefix: string
@@ -56,27 +56,27 @@ export const DocPageEdit: PluginFC<{
   mediaData: ReturnType<ObjectDataHook>
 }> =
 function ({
-    React, useObjectData, useDocPageData,
+    useObjectData, useDocPageData,
     path, urlPrefix,
     onSave, onUpdatePath, onAddSubpage, onDelete,
     mediaDir, onAddMedia, onDeleteMedia,
     getPageTitleAtPath,
     mediaData,
 }) {
-  const [contentsExpanded, expandContents] = React.useState<boolean | undefined>(true);
+  const [contentsExpanded, expandContents] = useState<boolean | undefined>(true);
 
-  const [resetCounter, updateResetCounter] = React.useState(0);
+  const [resetCounter, updateResetCounter] = useState(0);
 
   const data = useDocPageData(useObjectData, [path]);
   const originalPage = (data.value[path] || undefined) as SourceDocPageData | undefined;
-  const [editedPage, updateEditedPage] = React.useState<null | SourceDocPageData>(null);
+  const [editedPage, updateEditedPage] = useState<null | SourceDocPageData>(null);
   const page: SourceDocPageData | null = (onSave ? editedPage : null) || originalPage || null;
 
-  const [editedURL, updateEditedURL] = React.useState<null | string>(null);
+  const [editedURL, updateEditedURL] = useState<null | string>(null);
   const canEditURL = onUpdatePath !== undefined && editedPage === null && path !== DOCS_ROOT;
   const url: string = (editedURL || path).replace(DOCS_ROOT, urlPrefix);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (onUpdatePath && path === editedURL) {
       updateEditedURL(null);
     }
@@ -329,7 +329,6 @@ function ({
         </H6>
 
         <SummaryEditor
-          React={React}
           css={contentsExpanded ? css`display: none` : undefined}
           key={`${path}=${JSON.stringify(initialSummary || {})}-${resetCounter}`}
           onChange={canEdit ?
@@ -346,7 +345,6 @@ function ({
           onExpand={expandContents}
           css={css`flex: 1; min-height: 30vh`}>
         <ContentsEditor
-          React={React}
           css={css`flex: 1;`}
           key={`${path}=${JSON.stringify(initialContents || {})}-${resetCounter}`}
           mediaDir={mediaDir}

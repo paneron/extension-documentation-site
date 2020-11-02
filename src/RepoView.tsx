@@ -5,7 +5,7 @@ import path from 'path';
 import yaml from 'js-yaml';
 import update from 'immutability-helper';
 import log from 'electron-log';
-import React from 'react';
+import React, { useState } from 'react';
 import { css, jsx } from '@emotion/core';
 
 import {
@@ -39,19 +39,19 @@ export const RepositoryView: React.FC<RepositoryViewProps> = ({ ...props }) => {
 
 const AperisSite: React.FC<RepositoryViewProps> =
 function ({
-    React, requestFileFromFilesystem, makeAbsolutePath,
+    requestFileFromFilesystem, makeAbsolutePath,
     useObjectData, useObjectSyncStatus,
     changeObjects,
   }) {
   //log.debug("Rendering Doc site repository view");
 
-  const [isBusy, setBusy] = React.useState(false);
+  const [isBusy, setBusy] = useState(false);
 
   const settingsData = useSiteSettings(useObjectData);
 
   const urlPrefix = settingsData.value?.urlPrefix || '';
 
-  const [selectedPagePath, selectPage] = React.useState<string>('docs');
+  const [selectedPagePath, selectPage] = useState<string>('docs');
 
   const syncStatus = useDocPageSyncStatus(useObjectSyncStatus);
 
@@ -386,7 +386,6 @@ function ({
         </div>
         <div css={css`overflow-y: auto; padding: 1rem 1rem .5rem 1rem;`}>
           <SiteSettings
-            React={React}
             changeObjects={changeObjects}
             originalSettings={settingsData}
             requestFileFromFilesystem={requestFileFromFilesystem}
@@ -398,8 +397,6 @@ function ({
             <DocPageEdit
               key={`${selectedPagePath}-${(selectedPageData?.media || []).length}`}
 
-              React={React}
-              setTimeout={setTimeout}
               useDocPageData={useDocPageData}
               useObjectData={useObjectData}
 
