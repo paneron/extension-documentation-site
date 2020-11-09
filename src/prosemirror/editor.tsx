@@ -2,7 +2,7 @@
 /** @jsxFrag React.Fragment */
 
 import { ClassNames, css, jsx } from '@emotion/core';
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 
 import {
   AnchorButton, IButtonProps,
@@ -310,9 +310,9 @@ const urnLinkSchema: LinkSchema = {
 }
 
 
-const LinkEditor: React.FC<LinkAttributeEditorProps> = function ({ schemas, attrs, onAttrsChanged }) {
-  const [editedAttrs, updateEditedAttrs] = useState<LinkNodeAttrs | null>(null);
-  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+const LinkEditor: React.FC<LinkAttributeEditorProps> = function ({ React, schemas, attrs, onAttrsChanged }) {
+  const [editedAttrs, updateEditedAttrs] = React.useState<LinkNodeAttrs | null>(null);
+  const [validationErrors, setValidationErrors] = React.useState<string[]>([]);
   const attr = editedAttrs || attrs;
 
   async function handleConfirm() {
@@ -327,7 +327,7 @@ const LinkEditor: React.FC<LinkAttributeEditorProps> = function ({ schemas, attr
     require('electron').shell.openExternal(url);
   }
 
-  useEffect(() => {
+  React.useEffect(() => {
     (async () => {
 
       setValidationErrors([]);
