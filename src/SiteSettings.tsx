@@ -40,11 +40,9 @@ export const SiteSettings: React.FC<{
   originalSettings: ReturnType<DocSiteSettingsHook>
 }> = function ({ requestFileFromFilesystem, originalSettings, changeObjects }) {
   const [editedSettings, updateEditedSettings] = useState<SiteSettings | null>(null);
-
   const settings: SiteSettings | null = editedSettings || originalSettings.value;
 
   const [_isBusy, setBusy] = useState(false);
-
   const isBusy: boolean = originalSettings.isUpdating || _isBusy;
 
   async function handleWriteDeploymentSetup(setupID: string, remove = false) {
