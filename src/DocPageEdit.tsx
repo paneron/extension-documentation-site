@@ -237,7 +237,7 @@ function ({
           </FieldWithErrors>
 
           <FieldWithErrors
-              label={`URL path: ${nodePath.dirname(`/${url}`).replace(/^\//, '').replace(/\/$/, '')}/`}
+              label={`Path: ${nodePath.dirname(`/${url}`).replace(/^\//, '').replace(/\/$/, '')}/`}
               helperText={!onUpdatePath
                 ? "URL cannot be edited for any page that contains subpages, and for the topmost-level page."
                 : undefined}
@@ -270,7 +270,7 @@ function ({
               <FieldWithErrors
                   key={`redirect-${idx}`}
                   helperText={idx === redirects.length - 1
-                    ? "Do not include global URL prefix, and add no leading and trailing slashes."
+                    ? "Do not include global path prefix, and add no leading and trailing slashes."
                     : undefined}
                   label={<>
                     {redirects.length > 1 ? <Tag round minimal>{idx + 1}</Tag> : null}
