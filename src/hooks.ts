@@ -147,6 +147,7 @@ export const useSiteSettings: DocSiteSettingsHook = (useObjectData) => {
 
     headerBannerBlob: settingsHook.value[HEADER_BANNER_FILENAME]!.value as string,
     footerBannerBlob: settingsHook.value[FOOTER_BANNER_FILENAME]!.value as string,
+    deploymentSetup: settingsFileData.deploymentSetup || null,
   };
 
   return { ...settingsHook, value: originalSettings };

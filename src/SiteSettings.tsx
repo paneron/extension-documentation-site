@@ -5,10 +5,10 @@ import log from 'electron-log';
 import yaml from 'js-yaml';
 import { css, jsx } from '@emotion/core';
 import React, { useState, useEffect } from 'react';
-import { ObjectDataset, RepositoryViewProps } from "@riboseinc/paneron-extension-kit/types";
-import { Button, ButtonGroup, FormGroup, InputGroup, NonIdealState } from '@blueprintjs/core';
+import { ObjectChangeset, ObjectDataset, RepositoryViewProps } from "@riboseinc/paneron-extension-kit/types";
+import { Button, ButtonGroup, FormGroup, InputGroup, Menu, NonIdealState, Popover } from '@blueprintjs/core';
 import { DocSiteSettingsHook } from './hooks';
-import { getGHAWorkflowChangeset } from './ghaWorkflow';
+import deploymentSetup from './deployment';
 
 
 export interface SiteSettings {
@@ -17,6 +17,7 @@ export interface SiteSettings {
   footerBannerLink: string
   headerBannerBlob: string
   footerBannerBlob: string
+  deploymentSetup: string | null
 }
 
 
@@ -24,6 +25,7 @@ interface SiteSettingsFile {
   title: string
   urlPrefix: string
   footerBannerLink: string
+  deploymentSetup: string | null
 }
 
 
@@ -45,14 +47,35 @@ export const SiteSettings: React.FC<{
 
   const isBusy: boolean = originalSettings.isUpdating || _isBusy;
 
-  async function handleWriteGHAWorkflow(remove = false) {
-    if (isBusy || settings === null) { return; }
+  async function handleWriteDeploymentSetup(setupID: string, remove = false) {
+    if (isBusy || settings === null || editedSettings !== null) { return; }
 
-    const changeset = getGHAWorkflowChangeset(settings, remove);
+    let changeset: ObjectChangeset;
+    try {
+      changeset = deploymentSetup[setupID].getChangeset(settings, remove);
+    } catch (e) {
+      log.error("Unable to retrieve changeset for deployment setup with ID", setupID);
+      return;
+    }
+
+    const settingsFileData: SiteSettingsFile = {
+      title: settings.title,
+      urlPrefix: settings.urlPrefix,
+      footerBannerLink: settings.footerBannerLink,
+      deploymentSetup: remove === false ? setupID : null,
+    }
 
     setBusy(true);
+
     try {
-      await changeObjects(changeset, "Write GHA workflow", true);
+      await changeObjects({
+        ...changeset,
+        [SETTINGS_FILENAME]: {
+          encoding: 'utf-8' as const,
+          oldValue: undefined,
+          newValue: yaml.dump(settingsFileData, { noRefs: true }),
+        },
+      }, "Write deployment setup", true);
     } finally {
       setBusy(false);
     }
@@ -67,6 +90,7 @@ export const SiteSettings: React.FC<{
       title: newSettings.title,
       urlPrefix: newSettings.urlPrefix,
       footerBannerLink: newSettings.footerBannerLink,
+      deploymentSetup: newSettings.deploymentSetup,
     }
     try {
       await changeObjects({
@@ -153,11 +177,29 @@ export const SiteSettings: React.FC<{
             intent={editedSettings !== null ? 'success' : undefined}>
           Save site settings
         </Button>
-        <Button
-            disabled={isBusy}
-            onClick={() => handleWriteGHAWorkflow()}>
-          Write GHA workflow
-        </Button>
+        <Popover
+            content={
+              <Menu>
+                <Menu.Divider title={settings.deploymentSetup ? "Clear deployment setup" : "Write deployment setup"} />
+                {settings.deploymentSetup
+                  ? <Menu.Item
+                        icon="trash"
+                        disabled={isBusy || editedSettings !== null}
+                        onClick={() => settings.deploymentSetup ? handleWriteDeploymentSetup(settings.deploymentSetup, true) : void 0}
+                        text={deploymentSetup[settings.deploymentSetup]?.title} />
+                  : Object.entries(deploymentSetup).map(([setupID, setup]) =>
+                      <Menu.Item
+                        key={setupID}
+                        icon="add"
+                        disabled={isBusy || editedSettings !== null}
+                        onClick={() => handleWriteDeploymentSetup(setupID)}
+                        text={setup.title}
+                        title={setup.description} />
+                    )}
+              </Menu>
+            }>
+          <Button disabled={isBusy || editedSettings !== null} icon="more" />
+        </Popover>
       </ButtonGroup>
     </>
   );
@@ -280,4 +322,5 @@ const SETTINGS_STUB: SiteSettings = {
   urlPrefix: '',
   headerBannerBlob: DEFAULT_HEADER_BANNER_SVG,
   footerBannerBlob: DEFAULT_FOOTER_BANNER_SVG,
+  deploymentSetup: null,
 };
