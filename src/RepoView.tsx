@@ -28,6 +28,7 @@ import {
 } from './update';
 import { filepathCandidates, getDocPagePaths } from './util';
 import { SiteSettings } from './SiteSettings';
+import PageSection from './PageSection';
 
 
 Object.assign(console, log);
@@ -391,16 +392,18 @@ function ({
             contents={[nodeTree]}
             onNodeClick={!isBusy ? handleNodeClick : undefined} />
         </div>
-        <div css={css`overflow-y: auto; padding: 1rem 1rem .5rem 1rem;`}>
-          <SiteSettings
-            changeObjects={changeObjects}
-            originalSettings={settingsData}
-            requestFileFromFilesystem={requestFileFromFilesystem}
-          />
-        </div>
+        <PageSection title="Site settings" className={Classes.ELEVATION_1}>
+          <div css={css`overflow-y: auto; padding: 1rem 1rem .5rem 1rem`}>
+            <SiteSettings
+              changeObjects={changeObjects}
+              originalSettings={settingsData}
+              requestFileFromFilesystem={requestFileFromFilesystem}
+            />
+          </div>
+        </PageSection>
       </div>
       {mediaDir !== undefined
-        ? <div css={css`flex: 1; display: flex; flex-flow: column nowrap;`} className={Classes.ELEVATION_2}>
+        ? <div css={css`z-index: 2; flex: 1; display: flex; flex-flow: column nowrap;`} className={Classes.ELEVATION_2}>
             <DocPageEdit
               key={`${selectedPagePath}-${(selectedPageData?.media || []).length}`}
 
