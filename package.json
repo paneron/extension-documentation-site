@@ -13,6 +13,9 @@
     "*.js",
     "*.js.map",
     "*.d.ts",
+    "deployment/*.js",
+    "deployment/*.js.map",
+    "deployment/*.d.ts",
     "prosemirror/*.js",
     "prosemirror/*.js.map",
     "prosemirror/*.d.ts"
