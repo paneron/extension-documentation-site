@@ -18,7 +18,14 @@ import { FileChangeType, ObjectChangeset, RepositoryViewProps } from '@riboseinc
 import { SourceDocPageData } from './types';
 import { useDocPageData, useDocPageMedia, useDocPageSyncStatus, useSiteSettings } from './hooks';
 import { DocPageEdit } from './DocPageEdit';
-import { getAddMediaChangeset, getAddPageChangeset, getDeletePageChangeset, getMovePathChangeset, getUpdateMediaChangeset, getUpdatePageChangeset } from './update';
+import {
+  getAddMediaChangeset,
+  getAddPageChangeset,
+  getDeletePageChangeset,
+  getMovePathChangeset,
+  getUpdateMediaChangeset,
+  getUpdatePageChangeset,
+} from './update';
 import { filepathCandidates, getDocPagePaths } from './util';
 import { SiteSettings } from './SiteSettings';
 
