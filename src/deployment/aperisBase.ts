@@ -12,6 +12,7 @@ function getAperisSetupChangeset(settings: SiteSettings, remove: boolean): Objec
       encoding: 'utf-8',
       oldValue: undefined,
       newValue: remove ? null : `
+_DocPage
 node_modules
 tmp
 artifacts
