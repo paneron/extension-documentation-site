@@ -4,7 +4,7 @@ import { DeploymentSetup } from './types';
 
 const setup: DeploymentSetup = {
   title: "GitLab Pages",
-  description: "Basic configuration for a GitLab pages setup.",
+  description: "Basic configuration for a GitLab pages setup. NOTE: If your GitLab repository is at “https://gitlab.com/youraccount/your-project”, then you also need to set Prefix to “your-project”, without quotes, in site settings, and your site will be available at “youraccount.gitlab.ci/your-project”.",
   getChangeset: (settings, remove = false) => {
     return {
 
