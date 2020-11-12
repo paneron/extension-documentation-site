@@ -136,17 +136,17 @@ export const SiteSettings: React.FC<{
           requestFileFromFilesystem={requestFileFromFilesystem}
           text="Change header banner image"
           contentsBlob={settings.headerBannerBlob}
-          onContentsChange={(newBlob) => {
+          onContentsChange={!isBusy ? (newBlob) => {
             updateEditedSettings({ ...settings, headerBannerBlob: newBlob })
-          }}
+          } : undefined}
         />
         <SVGFileInputWithPreview
           requestFileFromFilesystem={requestFileFromFilesystem}
           text="Change footer banner image"
           contentsBlob={settings.footerBannerBlob}
-          onContentsChange={(newBlob) => {
+          onContentsChange={!isBusy ? (newBlob) => {
             updateEditedSettings({ ...settings, footerBannerBlob: newBlob })
-          }}
+          } : undefined}
         />
       </FormGroup>
 
@@ -210,7 +210,7 @@ const Buffer = require('electron').remote.getGlobal('Buffer');
 const SVGFileInputWithPreview: React.FC<{
   text: string
   contentsBlob: string
-  onContentsChange: (blob: string) => void
+  onContentsChange?: (blob: string) => void
   requestFileFromFilesystem: RepositoryViewProps["requestFileFromFilesystem"]
 }> = function ({ requestFileFromFilesystem, text, contentsBlob, onContentsChange }) {
 
@@ -232,6 +232,10 @@ const SVGFileInputWithPreview: React.FC<{
   }, [contentsBlob]);
 
   async function handleChangeFile() {
+    if (!onContentsChange) {
+      return;
+    }
+
     const result: ObjectDataset = await requestFileFromFilesystem({
       prompt: "Please choose a small SVG file",
       filters: [{ name: "Images", extensions: ['svg'] }],
@@ -253,7 +257,9 @@ const SVGFileInputWithPreview: React.FC<{
             src={previewDataURL}
             css={css`width: 2rem; height: 2rem; margin-right: .5rem; flex-shrink: 0;`} />
         : null}
-      <Button alignText="left" fill onClick={handleChangeFile}>{text}</Button>
+      <Button alignText="left" fill disabled={!onContentsChange} onClick={handleChangeFile}>
+        {text}
+      </Button>
     </div>
   );
 };
