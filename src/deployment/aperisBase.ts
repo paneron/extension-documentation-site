@@ -30,10 +30,12 @@ dist
 
         export default {
           entry: path.join(__dirname, 'src', 'index.tsx'),
+
           getRoutes: async () => {
             return [
             ]
           },
+
           plugins: [
             'react-static-plugin-typescript',
             'react-static-plugin-styled-components',
