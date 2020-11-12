@@ -19,11 +19,13 @@ pages:
   cache:
     paths: [node_modules]
   artifacts:
-    paths: [dist]
+    paths: [public]
   only: [master]
   script:
     - yarn
     - yarn build
+    - rm -rf public
+    - cp -R dist public
         `
       },
     };
