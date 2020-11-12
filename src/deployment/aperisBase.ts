@@ -6,6 +6,10 @@ const ROBOTS = "User-agent: *";
 
 
 function getAperisSetupChangeset(settings: SiteSettings, remove: boolean): ObjectChangeset {
+  const indexRoutePlaceholder = settings.urlPrefix
+    ? `{ path: '/', template: '_DocPage' }, { path: '404', template: '_DocPage' }`
+    : '';
+
   return {
 
     '.gitignore': {
@@ -32,8 +36,7 @@ dist
           entry: path.join(__dirname, 'src', 'index.tsx'),
 
           getRoutes: async () => {
-            return [
-            ]
+            return [${indexRoutePlaceholder}]
           },
 
           plugins: [
