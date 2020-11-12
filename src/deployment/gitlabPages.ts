@@ -10,7 +10,7 @@ const setup: DeploymentSetup = {
 
       ...getAperisSetupChangeset(settings, remove),
 
-      '.github/workflows/deploy-master.yml': {
+      '.gitlab-ci.yml': {
         encoding: 'utf-8',
         oldValue: undefined,
         newValue: remove ? null : `
