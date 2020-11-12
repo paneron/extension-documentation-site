@@ -22,7 +22,7 @@ pages:
     paths: [dist]
   only: [master]
   script:
-    - yarn install
+    - yarn
     - yarn build
         `
       },
