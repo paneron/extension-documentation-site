@@ -262,7 +262,7 @@ dist
     "chroma-js": "^2.1.0",
     "react": "^16.9.0",
     "react-dom": "^16.9.0",
-    "react-static": "^7.2.0",
+    "react-static": "^7.4.2",
     "react-static-plugin-reach-router": "^7.2.0",
     "react-static-plugin-sitemap": "^7.2.0",
     "react-static-plugin-source-filesystem": "^7.2.0",
