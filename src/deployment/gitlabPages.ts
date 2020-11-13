@@ -7,14 +7,8 @@ const setup: DeploymentSetup = {
   title: "GitLab Pages",
   description: "Basic configuration for a GitLab pages setup. NOTE: If your GitLab repository is at “https://gitlab.com/youraccount/your-project”, then you also need to set Prefix to “your-project”, without quotes, in site settings, and your site will be available at “youraccount.gitlab.ci/your-project”.",
   getChangeset: (settings, remove = false) => {
-    let aperisOut = 'dist';
-    let gitlabPublic = 'public';
-    let publicPath: string;
-    if (settings.siteURLPrefix) {
-      publicPath = path.join(aperisOut, settings.siteURLPrefix);
-    } else {
-      publicPath = aperisOut;
-    }
+    const reactStaticOut = 'dist';
+    const gitlabPublic = 'public';
     return {
 
       ...getAperisSetupChangeset(settings, remove),
@@ -34,7 +28,7 @@ pages:
     - yarn
     - yarn build
     - rm -rf ${gitlabPublic}
-    - cp -R ${publicPath} ${gitlabPublic}
+    - cp -R ${reactStaticOut} ${gitlabPublic}
         `
       },
     };
