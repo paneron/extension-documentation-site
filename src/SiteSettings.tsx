@@ -166,8 +166,8 @@ export const SiteSettings: React.FC<{
         <ControlGroup>
           <InputGroup
             fill
-            title="Global React site prefix under domain name, when deployed."
-            placeholder="Site"
+            title="Global React site prefix under domain name, when deployed. Used e.g. in shared static hosting setups, like GitLab or GitHub Pages."
+            placeholder="for the whole site"
             value={settings.siteURLPrefix}
             disabled={isBusy}
             onChange={(evt: React.FormEvent<HTMLInputElement>) =>
@@ -175,7 +175,7 @@ export const SiteSettings: React.FC<{
           <InputGroup
             fill
             title="Path prefix for these docs within the React site."
-            placeholder="Docs"
+            placeholder="for the docs"
             value={settings.docsURLPrefix}
             disabled={isBusy}
             onChange={(evt: React.FormEvent<HTMLInputElement>) =>
