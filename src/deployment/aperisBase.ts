@@ -51,7 +51,7 @@ dist
                 headerBanner: 'header-banner.svg',
                 footerBanner: 'footer-banner.svg',
                 footerBannerLink: "${settings.footerBannerLink}",
-              }
+              },
             ],
             require.resolve('react-static-plugin-reach-router'),
             require.resolve('react-static-plugin-sitemap'),
