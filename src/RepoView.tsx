@@ -57,7 +57,7 @@ function ({
 
   const settingsData = useSiteSettings(useObjectData);
 
-  const urlPrefix = settingsData.value?.urlPrefix || '';
+  const urlPrefix = settingsData.value?.docsURLPrefix || '';
 
   const [selectedPagePath, selectPage] = useState<string>('docs');
 

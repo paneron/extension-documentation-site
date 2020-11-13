@@ -6,14 +6,15 @@ import yaml from 'js-yaml';
 import { css, jsx } from '@emotion/core';
 import React, { useState, useEffect } from 'react';
 import { ObjectChangeset, ObjectDataset, RepositoryViewProps } from "@riboseinc/paneron-extension-kit/types";
-import { Button, ButtonGroup, FormGroup, InputGroup, Menu, NonIdealState, Popover } from '@blueprintjs/core';
+import { Button, ButtonGroup, ControlGroup, FormGroup, InputGroup, Menu, NonIdealState, Popover } from '@blueprintjs/core';
 import { DocSiteSettingsHook } from './hooks';
 import deploymentSetup from './deployment';
 
 
 export interface SiteSettings {
   title: string
-  urlPrefix: string
+  docsURLPrefix: string
+  siteURLPrefix: string
   footerBannerLink: string
   headerBannerBlob: string
   footerBannerBlob: string
@@ -23,7 +24,8 @@ export interface SiteSettings {
 
 interface SiteSettingsFile {
   title: string
-  urlPrefix: string
+  docsURLPrefix: string
+  siteURLPrefix: string
   footerBannerLink: string
   deploymentSetup: string | null
 }
@@ -32,6 +34,17 @@ interface SiteSettingsFile {
 export const SETTINGS_FILENAME = 'site-settings.yaml';
 export const HEADER_BANNER_FILENAME = 'header-banner.svg';
 export const FOOTER_BANNER_FILENAME = 'footer-banner.svg';
+
+
+function toFileContents(settings: SiteSettings): SiteSettingsFile {
+  return {
+    title: settings.title,
+    docsURLPrefix: settings.docsURLPrefix,
+    siteURLPrefix: settings.siteURLPrefix,
+    footerBannerLink: settings.footerBannerLink,
+    deploymentSetup: settings.deploymentSetup,
+  };
+}
 
 
 export const SiteSettings: React.FC<{
@@ -57,14 +70,11 @@ export const SiteSettings: React.FC<{
     }
 
     const settingsFileData: SiteSettingsFile = {
-      title: settings.title,
-      urlPrefix: settings.urlPrefix,
-      footerBannerLink: settings.footerBannerLink,
+      ...toFileContents(settings),
       deploymentSetup: remove === false ? setupID : null,
     }
 
     setBusy(true);
-
     try {
       await changeObjects({
         ...changeset,
@@ -82,14 +92,9 @@ export const SiteSettings: React.FC<{
   async function handleSaveSettings(newSettings: SiteSettings) {
     if (isBusy) { return; }
 
-    setBusy(true);
+    const settingsFileData = toFileContents(newSettings);
 
-    const settingsFileData: SiteSettingsFile = {
-      title: newSettings.title,
-      urlPrefix: newSettings.urlPrefix,
-      footerBannerLink: newSettings.footerBannerLink,
-      deploymentSetup: newSettings.deploymentSetup,
-    }
+    setBusy(true);
     try {
       await changeObjects({
         [SETTINGS_FILENAME]: {
@@ -157,16 +162,25 @@ export const SiteSettings: React.FC<{
           onChange={(evt: React.FormEvent<HTMLInputElement>) =>
             updateEditedSettings({ ...settings, footerBannerLink: evt.currentTarget.value })} />
       </FormGroup>
-      <FormGroup
-          label="Prefix:"
-          inline>
-        <InputGroup
-          fill
-          placeholder="If in doubt, leave empty"
-          value={settings.urlPrefix}
-          disabled={isBusy}
-          onChange={(evt: React.FormEvent<HTMLInputElement>) =>
-            updateEditedSettings({ ...settings, urlPrefix: evt.currentTarget.value })} />
+      <FormGroup label="Prefixes:" labelInfo="(if in doubt, leave empty)">
+        <ControlGroup>
+          <InputGroup
+            fill
+            title="Global React site prefix under domain name, when deployed."
+            placeholder="Site"
+            value={settings.siteURLPrefix}
+            disabled={isBusy}
+            onChange={(evt: React.FormEvent<HTMLInputElement>) =>
+              updateEditedSettings({ ...settings, siteURLPrefix: evt.currentTarget.value })} />
+          <InputGroup
+            fill
+            title="Path prefix for these docs within the React site."
+            placeholder="Docs"
+            value={settings.docsURLPrefix}
+            disabled={isBusy}
+            onChange={(evt: React.FormEvent<HTMLInputElement>) =>
+              updateEditedSettings({ ...settings, docsURLPrefix: evt.currentTarget.value })} />
+        </ControlGroup>
       </FormGroup>
       <ButtonGroup fill css={css`& > * { white-space: nowrap; }`}>
         <Button
@@ -323,7 +337,8 @@ const DEFAULT_HEADER_BANNER_SVG = `<svg width="30" height="29" viewBox="0 0 30 2
 const SETTINGS_STUB: SiteSettings = {
   title: "Documentation site",
   footerBannerLink: 'https://open.ribose.com/',
-  urlPrefix: '',
+  docsURLPrefix: '',
+  siteURLPrefix: '',
   headerBannerBlob: DEFAULT_HEADER_BANNER_SVG,
   footerBannerBlob: DEFAULT_FOOTER_BANNER_SVG,
   deploymentSetup: null,

@@ -10,8 +10,8 @@ const setup: DeploymentSetup = {
     let aperisOut = 'dist';
     let gitlabPublic = 'public';
     let publicPath: string;
-    if (settings.urlPrefix) {
-      publicPath = path.join(aperisOut, settings.urlPrefix);
+    if (settings.siteURLPrefix) {
+      publicPath = path.join(aperisOut, settings.siteURLPrefix);
     } else {
       publicPath = aperisOut;
     }

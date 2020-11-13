@@ -133,7 +133,8 @@ export const useSiteSettings: DocSiteSettingsHook = (useObjectData) => {
 
   const settingsFormatIsCorrect: boolean = (
     (settingsFileData.title || '') !== '' &&
-    settingsFileData.urlPrefix !== undefined &&
+    settingsFileData.docsURLPrefix !== undefined &&
+    settingsFileData.siteURLPrefix !== undefined &&
     (settingsFileData.footerBannerLink || '') !== '');
 
   if (!settingsFormatIsCorrect) {
@@ -142,7 +143,8 @@ export const useSiteSettings: DocSiteSettingsHook = (useObjectData) => {
 
   const originalSettings: SiteSettings = {
     title: settingsFileData.title,
-    urlPrefix: settingsFileData.urlPrefix,
+    docsURLPrefix: settingsFileData.docsURLPrefix,
+    siteURLPrefix: settingsFileData.siteURLPrefix,
     footerBannerLink: settingsFileData.footerBannerLink,
 
     headerBannerBlob: settingsHook.value[HEADER_BANNER_FILENAME]!.value as string,

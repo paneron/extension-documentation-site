@@ -6,8 +6,13 @@ const ROBOTS = "User-agent: *";
 
 
 function getAperisSetupChangeset(settings: SiteSettings, remove: boolean): ObjectChangeset {
-  const indexRoutePlaceholder = settings.urlPrefix
-    ? `{ path: '/', template: '_DocPage' }, { path: '404', template: '_DocPage' }`
+
+  const indexRoutePlaceholder = settings.siteURLPrefix
+    ? `{ path: '/', template: '_DocPage' }, { path: '404', template: '_DocPage' }, `
+    : '';
+
+  const basePath = settings.siteURLPrefix
+    ? `basePath: '${settings.siteURLPrefix}',`
     : '';
 
   return {
@@ -39,6 +44,8 @@ dist
             return [${indexRoutePlaceholder}]
           },
 
+          ${basePath}
+
           plugins: [
             'react-static-plugin-typescript',
             'react-static-plugin-styled-components',
@@ -46,7 +53,7 @@ dist
               '@riboseinc/react-static-plugin-aperis-doc-pages',
               {
                 sourcePath: DOCS_PATH,
-                urlPrefix: '${settings.urlPrefix}',
+                urlPrefix: '${settings.docsURLPrefix}',
                 title: "${settings.title}",
                 headerBanner: 'header-banner.svg',
                 footerBanner: 'footer-banner.svg',
@@ -257,7 +264,7 @@ dist
   "dependencies": {
     "@reach/router": "^1.2.1",
     "@riboseinc/aperis-doc-pages": "^1.0.0-pre8",
-    "@riboseinc/react-static-plugin-aperis-doc-pages": "^1.0.22",
+    "@riboseinc/react-static-plugin-aperis-doc-pages": "^1.0.23",
     "axios": "^0.19.0",
     "chroma-js": "^2.1.0",
     "react": "^16.9.0",
