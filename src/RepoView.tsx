@@ -5,7 +5,7 @@ import path from 'path';
 import yaml from 'js-yaml';
 import update from 'immutability-helper';
 import log from 'electron-log';
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { css, jsx } from '@emotion/core';
 
 import {
@@ -13,7 +13,7 @@ import {
   ITreeNode, NonIdealState, Spinner, Tree,
 } from '@blueprintjs/core';
 
-import { FileChangeType, ObjectChangeset, RepositoryViewProps } from '@riboseinc/paneron-extension-kit/types';
+import { FileChangeType, ObjectChangeset } from '@riboseinc/paneron-extension-kit/types';
 
 import { SourceDocPageData } from './types';
 import { useDocPageData, useDocPageMedia, useDocPageSyncStatus, useSiteSettings } from './hooks';
@@ -29,6 +29,7 @@ import {
 import { filepathCandidates, getDocPagePaths } from './util';
 import { SiteSettings } from './SiteSettings';
 import PageSection from './PageSection';
+import { ExtensionViewContext } from '@riboseinc/paneron-extension-kit/context';
 
 
 Object.assign(console, log);
@@ -41,17 +42,14 @@ const FIRST_PAGE_STUB: SourceDocPageData = {
 };
 
 
-export const RepositoryView: React.FC<RepositoryViewProps> = ({ ...props }) => {
-  return <AperisSite {...props} />;
-}
+export default function () {
+  //log.debug("Rendering Doc site repository view");
 
-const AperisSite: React.FC<RepositoryViewProps> =
-function ({
+  const {
     requestFileFromFilesystem, makeAbsolutePath,
     useObjectData, useObjectSyncStatus,
     changeObjects,
-  }) {
-  //log.debug("Rendering Doc site repository view");
+  } = useContext(ExtensionViewContext);
 
   const [isBusy, setBusy] = useState(false);
 
@@ -394,11 +392,7 @@ function ({
         </div>
         <PageSection title="Site settings" className={Classes.ELEVATION_1}>
           <div css={css`overflow-y: auto; padding: 1rem 1rem .5rem 1rem`}>
-            <SiteSettings
-              changeObjects={changeObjects}
-              originalSettings={settingsData}
-              requestFileFromFilesystem={requestFileFromFilesystem}
-            />
+            <SiteSettings originalSettings={settingsData} />
           </div>
         </PageSection>
       </div>
@@ -408,7 +402,6 @@ function ({
               key={`${selectedPagePath}-${(selectedPageData?.media || []).length}`}
 
               useDocPageData={useDocPageData}
-              useObjectData={useObjectData}
 
               path={selectedPagePath}
               urlPrefix={urlPrefix}

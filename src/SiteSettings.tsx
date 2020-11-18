@@ -4,11 +4,12 @@
 import log from 'electron-log';
 import yaml from 'js-yaml';
 import { css, jsx } from '@emotion/core';
-import React, { useState, useEffect } from 'react';
-import { ObjectChangeset, ObjectDataset, RepositoryViewProps } from "@riboseinc/paneron-extension-kit/types";
+import React, { useState, useEffect, useContext } from 'react';
+import { ObjectChangeset, ObjectDataset } from "@riboseinc/paneron-extension-kit/types";
 import { Button, ButtonGroup, ControlGroup, FormGroup, InputGroup, Menu, NonIdealState, Popover } from '@blueprintjs/core';
 import { DocSiteSettingsHook } from './hooks';
 import deploymentSetup from './deployment';
+import { ExtensionViewContext } from '@riboseinc/paneron-extension-kit/context';
 
 
 export interface SiteSettings {
@@ -48,10 +49,10 @@ function toFileContents(settings: SiteSettings): SiteSettingsFile {
 
 
 export const SiteSettings: React.FC<{
-  requestFileFromFilesystem: RepositoryViewProps["requestFileFromFilesystem"]
-  changeObjects: RepositoryViewProps["changeObjects"]
   originalSettings: ReturnType<DocSiteSettingsHook>
-}> = function ({ requestFileFromFilesystem, originalSettings, changeObjects }) {
+}> = function ({ originalSettings }) {
+  const { changeObjects } = useContext(ExtensionViewContext);
+
   const [editedSettings, updateEditedSettings] = useState<SiteSettings | null>(null);
   const settings: SiteSettings | null = editedSettings || originalSettings.value;
 
@@ -138,7 +139,6 @@ export const SiteSettings: React.FC<{
 
       <FormGroup label="Branding:">
         <SVGFileInputWithPreview
-          requestFileFromFilesystem={requestFileFromFilesystem}
           text="Change header banner image"
           contentsBlob={settings.headerBannerBlob}
           onContentsChange={!isBusy ? (newBlob) => {
@@ -146,7 +146,6 @@ export const SiteSettings: React.FC<{
           } : undefined}
         />
         <SVGFileInputWithPreview
-          requestFileFromFilesystem={requestFileFromFilesystem}
           text="Change footer banner image"
           contentsBlob={settings.footerBannerBlob}
           onContentsChange={!isBusy ? (newBlob) => {
@@ -225,8 +224,9 @@ const SVGFileInputWithPreview: React.FC<{
   text: string
   contentsBlob: string
   onContentsChange?: (blob: string) => void
-  requestFileFromFilesystem: RepositoryViewProps["requestFileFromFilesystem"]
-}> = function ({ requestFileFromFilesystem, text, contentsBlob, onContentsChange }) {
+}> = function ({ text, contentsBlob, onContentsChange }) {
+
+  const { requestFileFromFilesystem } = useContext(ExtensionViewContext);
 
   const [previewDataURL, setPreviewDataURL] = useState<null | string>(null);
 

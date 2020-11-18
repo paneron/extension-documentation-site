@@ -5,9 +5,10 @@ import nodePath from 'path';
 import update from 'immutability-helper';
 import log from 'electron-log';
 import { css, jsx } from '@emotion/core';
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 
-import { ObjectDataHook, RepositoryViewProps } from '@riboseinc/paneron-extension-kit/types';
+import { ObjectDataHook } from '@riboseinc/paneron-extension-kit/types';
+import { ExtensionViewContext } from '@riboseinc/paneron-extension-kit/context';
 
 import {
   Button, ButtonGroup, Colors, ControlGroup,
@@ -43,7 +44,6 @@ export const DocPageEdit: React.FC<{
   mediaDir: string
   urlPrefix: string
 
-  useObjectData: RepositoryViewProps["useObjectData"]
   useDocPageData: DocPageDataHook
 
   onSave?: (path: string, oldPage: SourceDocPageData, newDoc: SourceDocPageData) => Promise<void>
@@ -57,13 +57,16 @@ export const DocPageEdit: React.FC<{
   mediaData: ReturnType<ObjectDataHook>
 }> =
 function ({
-    useObjectData, useDocPageData,
+    useDocPageData,
     path, urlPrefix,
     onSave, onUpdatePath, onAddSubpage, onDelete,
     mediaDir, onAddMedia, onDeleteMedia,
     getPageTitleAtPath,
     mediaData,
 }) {
+
+  const { useObjectData } = useContext(ExtensionViewContext);
+
   const [contentsExpanded, expandContents] = useState<boolean | undefined>(true);
 
   const [resetCounter, updateResetCounter] = useState(0);
