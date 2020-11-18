@@ -1,4 +1,3 @@
-import path from 'path';
 import getAperisSetupChangeset from './aperisBase';
 import { DeploymentSetup } from './types';
 
