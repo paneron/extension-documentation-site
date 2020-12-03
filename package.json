@@ -1,7 +1,7 @@
 {
   "name": "@riboseinc/paneron-extension-aperis-site",
   "version": "1.0.0-alpha31",
-  "description": "Paneron extension for authoring documentation sites",
+  "description": "Write and maintain documentation",
   "main": "plugin.js",
   "repository": "https://github.com/paneron/extension-aperis-site",
   "author": "Ribose Inc. <open.source@ribose.com>",
