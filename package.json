@@ -20,6 +20,12 @@
     "prosemirror/*.js.map",
     "prosemirror/*.d.ts"
   ],
+  "paneronExtension": {
+    "title": "Aperis",
+    "iconURL": "https://www.aperis.org/mark.png",
+    "featured": true,
+    "requiredHostAppVersion": "1.0.0-alpha19"
+  },
   "devDependencies": {
     "@babel/cli": "^7.1.5",
     "@babel/core": "^7.4.0",
