@@ -1,6 +1,6 @@
 {
   "name": "@riboseinc/paneron-extension-aperis-site",
-  "version": "1.0.0-alpha32",
+  "version": "1.0.0-alpha33",
   "description": "Write and maintain documentation",
   "main": "plugin.js",
   "repository": "https://github.com/paneron/extension-aperis-site",
