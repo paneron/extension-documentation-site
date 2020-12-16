@@ -5,6 +5,7 @@ import log from 'electron-log';
 
 import {
   FileChangeType,
+  ObjectChangeStatusSet,
   ObjectDataHook,
   ObjectDataRequest, ObjectSyncStatusHook,
   ValueHook,
@@ -33,7 +34,7 @@ export const useDocPageSyncStatus: DocPageSyncStatusHook = (useObjectSyncStatus)
   const result = useObjectSyncStatus();
   const objects = result.value;
 
-  const filteredFiles: Record<string, FileChangeType> = Object.entries(objects).
+  const filteredFiles: ObjectChangeStatusSet = Object.entries(objects).
     filter(([atPath, _]) => isDocumentationPage(atPath)).
     map(([atPath, state]) => ({ [atPath]: state })).
     reduce((p, c) => ({ ...p, ...c }), {});

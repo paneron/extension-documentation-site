@@ -5,15 +5,15 @@ import path from 'path';
 import yaml from 'js-yaml';
 import update from 'immutability-helper';
 import log from 'electron-log';
-import React, { useContext, useState } from 'react';
+import { useContext, useState } from 'react';
 import { css, jsx } from '@emotion/core';
 
 import {
-  Button, ButtonGroup, Classes, Colors, Icon,
+  Button, Classes, Colors,
   ITreeNode, NonIdealState, Spinner, Tree,
 } from '@blueprintjs/core';
 
-import { FileChangeType, ObjectChangeset } from '@riboseinc/paneron-extension-kit/types';
+import { ObjectChangeset } from '@riboseinc/paneron-extension-kit/types';
 
 import { SourceDocPageData } from './types';
 import { useDocPageData, useDocPageMedia, useDocPageSyncStatus, useSiteSettings } from './hooks';
@@ -29,17 +29,11 @@ import {
 import { filepathCandidates, getDocPagePaths } from './util';
 import { SiteSettings } from './SiteSettings';
 import PageSection from './PageSection';
-import { ExtensionViewContext } from '@riboseinc/paneron-extension-kit/context';
+import { DatasetContext } from '@riboseinc/paneron-extension-kit/context';
+import { FIRST_PAGE_STUB } from './migrations/initial';
 
 
 Object.assign(console, log);
-
-
-const FIRST_PAGE_STUB: SourceDocPageData = {
-  title: "Home",
-  redirectFrom: [],
-  media: [],
-};
 
 
 export default function () {
@@ -49,7 +43,7 @@ export default function () {
     requestFileFromFilesystem, makeAbsolutePath,
     useObjectData, useObjectSyncStatus,
     changeObjects,
-  } = useContext(ExtensionViewContext);
+  } = useContext(DatasetContext);
 
   const [isBusy, setBusy] = useState(false);
 
@@ -115,8 +109,6 @@ export default function () {
       isSelected,
       hasCaret: false,
       isExpanded: true,
-      secondaryLabel: <DocPageActions
-        syncStatus={syncStatus.value[effectivePath]} />,
       data: { importance: data.importance, filePath: path },
     };
   });
@@ -157,7 +149,8 @@ export default function () {
 
   async function handleApplyChangeset(changeset: ObjectChangeset, message: string) {
     log.debug("Applying changeset", changeset, message);
-    if (isBusy) { return; }
+    if (isBusy || !changeObjects) { return; }
+
     setBusy(true);
     try {
       log.silly("Applying changeset…");
@@ -354,7 +347,8 @@ export default function () {
       icon="clean"
       title="There are no documentation pages yet."
       description={
-        <Button disabled={isBusy} intent="success" large onClick={async () => {
+        <Button disabled={isBusy || !changeObjects} intent="success" large onClick={async () => {
+          if (!changeObjects) { return; }
           setBusy(true);
           try {
             await changeObjects({
@@ -382,13 +376,15 @@ export default function () {
     mediaDir = undefined;
   }
 
+  const readOnly = isBusy || !changeObjects;
+
   return (
     <div css={css`flex: 1; display: flex; flex-flow: row nowrap; overflow: hidden;`}>
       <div css={css`width: 30vw; min-width: 350px; overflow: hidden; display: flex; flex-flow: column nowrap;`}>
         <div css={css`flex: 1; overflow-y: auto; background: ${Colors.WHITE};`}>
           <Tree
             contents={[nodeTree]}
-            onNodeClick={!isBusy ? handleNodeClick : undefined} />
+            onNodeClick={handleNodeClick} />
         </div>
         <PageSection title="Site settings" className={Classes.ELEVATION_1}>
           <div css={css`overflow-y: auto; padding: 1rem 1rem .5rem 1rem`}>
@@ -408,13 +404,13 @@ export default function () {
 
               mediaDir={mediaDir}
 
-              onSave={!isBusy ? handleSavePage : undefined}
-              onAddMedia={!isBusy ? handleAddMedia : undefined}
-              onDeleteMedia={(!isBusy && Object.keys(selectedPageMediaData.value).length > 0)
+              onSave={!readOnly ? handleSavePage : undefined}
+              onAddMedia={!readOnly ? handleAddMedia : undefined}
+              onDeleteMedia={(!readOnly && Object.keys(selectedPageMediaData.value).length > 0)
                 ? handleDeleteMedia
                 : undefined}
-              onUpdatePath={(selectedPageHasChildren || isBusy) ? undefined : handleChangePath}
-              onAddSubpage={!isBusy ? (async () => {
+              onUpdatePath={(selectedPageHasChildren || readOnly) ? undefined : handleChangePath}
+              onAddSubpage={!readOnly ? (async () => {
                 const occupiedChildPaths = selectedPageChildren.map(c => path.basename(c));
                 const newID: string = occupiedChildPaths.indexOf('new-page') >= 0
                   ? `new-page-${occupiedChildPaths.filter(p => p.startsWith('new-page')).length}`
@@ -425,7 +421,7 @@ export default function () {
                   redirectFrom: [],
                 });
               }) : undefined}
-              onDelete={(selectedPageHasChildren || isBusy) ? undefined : async () => {
+              onDelete={(selectedPageHasChildren || readOnly) ? undefined : async () => {
                 await handleSavePage!(selectedPagePath, selectedPageData, null);
               }}
 
@@ -439,19 +435,19 @@ export default function () {
 };
 
 
-const DocPageActions: React.FC<{
-  syncStatus?: FileChangeType
-}> =
-function ({ syncStatus }) {
-
-  return (
-    <ButtonGroup minimal>
-      <Icon
-        title={syncStatus !== 'unchanged' && syncStatus !== undefined
-          ? `This page has been ${syncStatus} since last synchronization`
-          : undefined}
-        icon={syncStatus === 'unchanged' ? 'tick-circle' : 'asterisk'}
-      />
-    </ButtonGroup>
-  );
-};
+// const DocPageActions: React.FC<{
+//   syncStatus?: FileChangeType
+// }> =
+// function ({ syncStatus }) {
+// 
+//   return (
+//     <ButtonGroup minimal>
+//       <Icon
+//         title={syncStatus !== 'unchanged' && syncStatus !== undefined
+//           ? `This page has been ${syncStatus} since last synchronization`
+//           : undefined}
+//         icon={syncStatus === 'unchanged' ? 'tick-circle' : 'asterisk'}
+//       />
+//     </ButtonGroup>
+//   );
+// };

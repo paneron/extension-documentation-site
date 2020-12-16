@@ -9,7 +9,7 @@ import { ObjectChangeset, ObjectDataset } from "@riboseinc/paneron-extension-kit
 import { Button, ButtonGroup, ControlGroup, FormGroup, InputGroup, Menu, NonIdealState, Popover } from '@blueprintjs/core';
 import { DocSiteSettingsHook } from './hooks';
 import deploymentSetup from './deployment';
-import { ExtensionViewContext } from '@riboseinc/paneron-extension-kit/context';
+import { DatasetContext } from '@riboseinc/paneron-extension-kit/context';
 
 
 export interface SiteSettings {
@@ -51,7 +51,7 @@ function toFileContents(settings: SiteSettings): SiteSettingsFile {
 export const SiteSettings: React.FC<{
   originalSettings: ReturnType<DocSiteSettingsHook>
 }> = function ({ originalSettings }) {
-  const { changeObjects } = useContext(ExtensionViewContext);
+  const { changeObjects } = useContext(DatasetContext);
 
   const [editedSettings, updateEditedSettings] = useState<SiteSettings | null>(null);
   const settings: SiteSettings | null = editedSettings || originalSettings.value;
@@ -60,7 +60,7 @@ export const SiteSettings: React.FC<{
   const isBusy: boolean = originalSettings.isUpdating || _isBusy;
 
   async function handleWriteDeploymentSetup(setupID: string, remove = false) {
-    if (isBusy || settings === null || editedSettings !== null) { return; }
+    if (isBusy || settings === null || editedSettings !== null || !changeObjects) { return; }
 
     let changeset: ObjectChangeset;
     try {
@@ -91,7 +91,7 @@ export const SiteSettings: React.FC<{
   }
 
   async function handleSaveSettings(newSettings: SiteSettings) {
-    if (isBusy) { return; }
+    if (isBusy || !changeObjects) { return; }
 
     const settingsFileData = toFileContents(newSettings);
 
@@ -122,7 +122,13 @@ export const SiteSettings: React.FC<{
 
   if (settings === null) {
     return <NonIdealState
-      description={<Button onClick={() => handleSaveSettings(SETTINGS_STUB)}>Initialize site settings</Button>}
+      description={
+        <Button
+            disabled={!changeObjects}
+            onClick={() => handleSaveSettings(SETTINGS_STUB)}>
+          Initialize site settings
+        </Button>
+      }
     />
   }
 
@@ -195,14 +201,14 @@ export const SiteSettings: React.FC<{
                 {settings.deploymentSetup
                   ? <Menu.Item
                         icon="trash"
-                        disabled={isBusy || editedSettings !== null}
+                        disabled={isBusy || editedSettings !== null || !changeObjects}
                         onClick={() => settings.deploymentSetup ? handleWriteDeploymentSetup(settings.deploymentSetup, true) : void 0}
                         text={deploymentSetup[settings.deploymentSetup]?.title} />
                   : Object.entries(deploymentSetup).map(([setupID, setup]) =>
                       <Menu.Item
                         key={setupID}
                         icon="add"
-                        disabled={isBusy || editedSettings !== null}
+                        disabled={isBusy || editedSettings !== null || !changeObjects}
                         onClick={() => handleWriteDeploymentSetup(setupID)}
                         text={setup.title}
                         title={setup.description} />
@@ -226,7 +232,7 @@ const SVGFileInputWithPreview: React.FC<{
   onContentsChange?: (blob: string) => void
 }> = function ({ text, contentsBlob, onContentsChange }) {
 
-  const { requestFileFromFilesystem } = useContext(ExtensionViewContext);
+  const { requestFileFromFilesystem } = useContext(DatasetContext);
 
   const [previewDataURL, setPreviewDataURL] = useState<null | string>(null);
 

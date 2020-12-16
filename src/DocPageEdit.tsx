@@ -8,7 +8,7 @@ import { css, jsx } from '@emotion/core';
 import React, { useContext, useEffect, useState } from 'react';
 
 import { ObjectDataHook } from '@riboseinc/paneron-extension-kit/types';
-import { ExtensionViewContext } from '@riboseinc/paneron-extension-kit/context';
+import { DatasetContext } from '@riboseinc/paneron-extension-kit/context';
 
 import {
   Button, ButtonGroup, Colors, ControlGroup,
@@ -65,7 +65,7 @@ function ({
     mediaData,
 }) {
 
-  const { useObjectData } = useContext(ExtensionViewContext);
+  const { useObjectData } = useContext(DatasetContext);
 
   const [contentsExpanded, expandContents] = useState<boolean | undefined>(true);
 
