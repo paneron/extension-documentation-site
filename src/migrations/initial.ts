@@ -1,5 +1,6 @@
-import yaml from 'js-yaml';
+import path from 'path';
 import { DatasetMigrationFunction } from '@riboseinc/paneron-extension-kit/types/migrations';
+import { yamlFile } from '@riboseinc/paneron-extension-kit/object-specs/ser-des';
 import { SourceDocPageData } from '../types';
 
 
@@ -10,15 +11,17 @@ export const FIRST_PAGE_STUB: SourceDocPageData = {
 };
 
 
+const sep = path.posix.sep;
+
+
 const initializeDataset: DatasetMigrationFunction = async (opts) => {
   opts?.onProgress?.("Creating top-level page…");
   return {
     versionAfter: '1.0.0-alpha33',
-    changeset: {
-      'docs/index.yaml': {
-        encoding: 'utf-8' as const,
+    bufferChangeset: {
+      '/docs/index.yaml': {
         oldValue: null,
-        newValue: yaml.dump(FIRST_PAGE_STUB, { noRefs: true }),
+        newValue: yamlFile.serialize(FIRST_PAGE_STUB, {})[sep],
       },
     },
   };

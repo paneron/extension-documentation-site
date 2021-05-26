@@ -2,20 +2,21 @@ import log from 'electron-log';
 import yaml from 'js-yaml';
 import path from 'path';
 
-import { ObjectChange, ObjectChangeset, ObjectDataset } from '@riboseinc/paneron-extension-kit/types';
+import { ObjectChange, ObjectChangeset } from '@riboseinc/paneron-extension-kit/types/objects';
 
 import { SourceDocPageData } from './types';
 import { DocPageMediaHook } from './hooks';
 import { filepathCandidates } from './util';
+import { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
 
 
 export function getAddMediaChangeset(
   targetDir: string,
-  objectDataset: ObjectDataset,
+  bufferDataset: BufferDataset,
 ): ObjectChangeset {
   let changeset: ObjectChangeset = {};
 
-  for (const [objectPath, objectData] of Object.entries(objectDataset)) {
+  for (const [objectPath, objectData] of Object.entries(bufferDataset)) {
     if (objectData === null) {
       continue;
     }
@@ -24,9 +25,8 @@ export function getAddMediaChangeset(
     const targetPath = path.posix.join(targetDir, relativeMediaFilename);
 
     changeset[targetPath] = {
-      encoding: objectData.encoding,
       oldValue: null,
-      newValue: objectData.value,
+      newValue: objectData.toString(),
     } as ObjectChange;
   }
   return changeset;
@@ -58,7 +58,7 @@ export function getUpdateMediaChangeset(
   //log.debug("Getting update media changeset", media, mediaData, sourceDir, targetDir);
 
   for (const relativeMediaFilename of media) {
-    const fileData = mediaData[path.posix.join(sourceDir, relativeMediaFilename)];
+    const fileData = mediaData.data[path.posix.join(sourceDir, relativeMediaFilename)];
 
     if (fileData === null) {
       log.error("Updating media: Cannot find media data", fileData);
@@ -67,17 +67,15 @@ export function getUpdateMediaChangeset(
 
     if (targetDir !== null) {
       changeset[path.posix.join(targetDir, relativeMediaFilename)] = {
-        encoding: fileData.encoding,
         oldValue: null,
-        newValue: fileData.value,
-      } as ObjectChange;
+        newValue: { binaryData: fileData.value },
+      };
     }
 
     changeset[path.posix.join(sourceDir, relativeMediaFilename)] = {
-      encoding: fileData.encoding,
-      oldValue: fileData.value,
+      oldValue: { binaryData: fileData.value },
       newValue: null,
-    } as ObjectChange;
+    };
 
   }
   return changeset;
@@ -104,14 +102,12 @@ export function getMovePathChangeset(
 
   return {
     [filePaths.pathInUse]: {
-      encoding: 'utf-8',
       oldValue: undefined,
       newValue: null,
     },
     [newAsNested]: {
-      encoding: 'utf-8',
       oldValue: null,
-      newValue: yaml.dump(pageData, { noRefs: true }),
+      newValue: pageData,
     },
     ...getUpdateMediaChangeset(pageData.media, mediaData, fromDir, toDir),
   };
@@ -142,17 +138,14 @@ export function getAddPageChangeset(
 
   return {
     [newPageFilePath]: {
-      encoding: 'utf-8',
       oldValue: null,
-      newValue: yaml.dump(newPageData, { noRefs: true }),
+      newValue: newPageData,
     },
     [parentFilePaths.nestedPath]: {
-      encoding: 'utf-8',
       oldValue: undefined,
       newValue: parentDataYAML,
     },
     [parentFilePaths.flatPath]: {
-      encoding: 'utf-8',
       oldValue: undefined,
       newValue: null,
     },
@@ -176,7 +169,6 @@ export function getDeletePageChangeset(
 
   return {
     [pathInUse]: {
-      encoding: 'utf-8',
       oldValue: undefined,
       newValue: null,
     },
@@ -200,9 +192,8 @@ export function getUpdatePageChangeset(
 
   return {
     [pathInUse]: {
-      encoding: 'utf-8',
       oldValue: undefined,
-      newValue: yaml.dump(newPageData, { noRefs: true }),
+      newValue: newPageData,
     },
   };
 }

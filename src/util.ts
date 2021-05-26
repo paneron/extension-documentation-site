@@ -1,12 +1,12 @@
-export function isDocumentationPage(atFilePath: string) {
+export function isDocPageAt(objectPath: string) {
   return (
-    atFilePath.startsWith('/docs/') &&
-    atFilePath !== '/meta.yaml' &&
-    atFilePath.endsWith('.yaml'));
+    objectPath.startsWith('/docs/') &&
+    objectPath !== '/meta.yaml' &&
+    objectPath.endsWith('.yaml'));
 }
 
 
-export function filepathToDocsPath(filepath: string): string {
+export function objectPathToDocsPath(filepath: string): string {
   return filepath.replace('/index.yaml', '').replace('.yaml', '').replace(/^\//, '');
 }
 

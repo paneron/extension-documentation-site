@@ -5,10 +5,12 @@ import { ClassNames, css, jsx } from '@emotion/core';
 import React from 'react';
 
 import {
-  AnchorButton, IButtonProps,
+  AnchorButton,
+  AnchorButtonProps,
   Classes, Colors,
-  ControlGroup, Divider, Tooltip, HTMLSelect, InputGroup, Button,
+  ControlGroup, Divider, HTMLSelect, InputGroup, Button,
 } from '@blueprintjs/core';
+import { Tooltip2 as Tooltip } from '@blueprintjs/popover2';
 
 import { MenuBarProps, MenuButtonFactory } from '@riboseinc/reprose/author/menu';
 
@@ -231,7 +233,7 @@ function (props) {
 
 // Menu bar
 
-const ITEM_BUTTON_PROPS: Record<string, IButtonProps> = {
+const ITEM_BUTTON_PROPS: Record<string, AnchorButtonProps> = {
   plain: { icon: 'paragraph' },
   bullet_list: { icon: 'properties' },
   ordered_list: { icon: 'numbered-list' },

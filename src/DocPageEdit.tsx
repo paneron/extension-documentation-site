@@ -7,22 +7,22 @@ import log from 'electron-log';
 import { css, jsx } from '@emotion/core';
 import React, { useContext, useEffect, useState } from 'react';
 
-import { ObjectDataHook } from '@riboseinc/paneron-extension-kit/types';
-import { DatasetContext } from '@riboseinc/paneron-extension-kit/context';
+import { Hooks } from '@riboseinc/paneron-extension-kit/types';
 
 import {
   Button, ButtonGroup, Colors, ControlGroup,
   H6, InputGroup, NumericInput,
-  Menu, Popover, Tag, ContextMenu, Tooltip, Spinner,
+  Menu, Popover, Tag, ContextMenu, Tooltip, Spinner, Dialog, FormGroup, MenuItem, MenuDivider,
 } from '@blueprintjs/core';
 
-import { DocPageDataHook } from './hooks';
 import { isProseMirrorStructure, SourceDocPageData } from './types';
 
 import { PROSEMIRROR_DOC_STUB } from './util';
 import { ContentsEditor, MenuWrapper, SummaryEditor } from './prosemirror/editor';
 import { FieldWithErrors, PartialValidator } from './formValidation';
 import PageSection from './PageSection';
+import { DatasetContext } from '@riboseinc/paneron-extension-kit/context';
+import { useDocPageMedia } from './hooks';
 
 
 const validateDocPageData: PartialValidator<SourceDocPageData> = (page) => {
@@ -40,58 +40,59 @@ const DOCS_ROOT = 'docs';
 
 
 export const DocPageEdit: React.FC<{
-  path: string
-  mediaDir: string
+  pagePath: string
   urlPrefix: string
 
-  useDocPageData: DocPageDataHook
+  pageData: SourceDocPageData
 
   onSave?: (path: string, oldPage: SourceDocPageData, newDoc: SourceDocPageData) => Promise<void>
   onUpdatePath?: (oldPath: string, newPath: string, leaveRedirect: boolean) => Promise<void>
-  onAddSubpage?: () => Promise<void>
+  onAddSubpage?: (newID: string) => Promise<void>
   onAddMedia?: () => Promise<string[]>
   onDeleteMedia?: (idx: number) => Promise<void>
   onDelete?: () => Promise<void>
-
-  getPageTitleAtPath: (path: string) => string | null
-  mediaData: ReturnType<ObjectDataHook>
 }> =
 function ({
-    useDocPageData,
-    path, urlPrefix,
-    onSave, onUpdatePath, onAddSubpage, onDelete,
-    mediaDir, onAddMedia, onDeleteMedia,
-    getPageTitleAtPath,
-    mediaData,
+  pageData,
+  pagePath,
+  urlPrefix,
+  onSave, onUpdatePath, onAddSubpage, onDelete, onAddMedia, onDeleteMedia,
 }) {
 
-  const { useObjectData } = useContext(DatasetContext);
+  const { makeAbsolutePath, useFilteredIndex, useIndexDescription, useObjectData } = useContext(DatasetContext);
 
   const [contentsExpanded, expandContents] = useState<boolean | undefined>(true);
 
   const [resetCounter, updateResetCounter] = useState(0);
 
-  const data = useDocPageData(useObjectData, [path]);
-  const originalPage = (data.value[path] || undefined) as SourceDocPageData | undefined;
+  const childrenIndexRequest = useFilteredIndex({
+    queryExpression: `return objPath.startsWith(${pagePath}) && objPath.endsWith(".yaml")`,
+  });
+  const childrenIndexDescriptionReq = useIndexDescription({
+    indexID: childrenIndexRequest.value.indexID ?? '',
+  });
+  const childrenCount = childrenIndexDescriptionReq.value.status.objectCount;
+  const hasChildren = childrenCount > 0;
+
+  const mediaDir = makeAbsolutePath(nodePath.dirname(pagePath));
+  const mediaData = useDocPageMedia(useObjectData, pageData.media, pagePath);
+
+  const originalPage = pageData;
   const [editedPage, updateEditedPage] = useState<null | SourceDocPageData>(null);
   const page: SourceDocPageData | null = (onSave ? editedPage : null) || originalPage || null;
 
   const [editedURL, updateEditedURL] = useState<null | string>(null);
-  const canEditURL = onUpdatePath !== undefined && editedPage === null && path !== DOCS_ROOT;
-  const url: string = (editedURL || path).replace(DOCS_ROOT, urlPrefix);
+  const canEditURL = onUpdatePath !== undefined && editedPage === null && pagePath !== DOCS_ROOT;
+  const url: string = (editedURL || pagePath).replace(DOCS_ROOT, urlPrefix);
 
   useEffect(() => {
-    if (onUpdatePath && path === editedURL) {
+    if (onUpdatePath && pagePath === editedURL) {
       updateEditedURL(null);
     }
     if (onSave && editedPage !== null && JSON.stringify(originalPage) === JSON.stringify(editedPage)) {
       updateEditedPage(null);
     }
   }, [editedURL, JSON.stringify(originalPage), JSON.stringify(editedPage)]);
-
-  const editedURLOccupiedByPageWithTitle: string | null = editedURL
-    ? getPageTitleAtPath(editedURL)
-    : null;
 
   const canEdit = page !== null && onSave !== undefined && editedURL === null;
 
@@ -101,7 +102,7 @@ function ({
 
   async function handleSave() {
     if (originalPage !== undefined && editedPage !== null && onSave) {
-      await onSave(path, originalPage, editedPage);
+      await onSave(pagePath, originalPage, editedPage);
     }
   }
 
@@ -113,21 +114,18 @@ function ({
   }
 
   async function handleChangePath(withRedirect: boolean) {
-    if (editedURL === null || !onUpdatePath) {
-      return;
-    }
-    if (getPageTitleAtPath(editedURL) !== null) {
+    if (editedURL === null || !onUpdatePath || !hasChildren) {
       return;
     }
     if (withRedirect) {
-      log.warn("Want to add redirect from", path, "to", editedURL);
+      log.warn("Want to add redirect from", pagePath, "to", editedURL);
     }
-    if (nodePath.dirname(path) !== nodePath.dirname(editedURL)) {
+    if (nodePath.dirname(pagePath) !== nodePath.dirname(editedURL)) {
       log.error("Cannot move page because dirnames don’t match!");
       return;
     }
 
-    await onUpdatePath(path, editedURL, withRedirect);
+    await onUpdatePath(pagePath, editedURL, withRedirect);
   }
 
   function handleAddRedirect() {
@@ -166,7 +164,9 @@ function ({
   }
   function getHandleDeleteMedia(idx: number) {
     return async function handleDeleteMedia() {
-      if ((page?.media || [])[idx] !== undefined && onDeleteMedia !== undefined) {
+      if ((page?.media || [])[idx] !== undefined &&
+          onDeleteMedia !== undefined &&
+          Object.keys(mediaData.value.data ?? {}).length > 0) {
         await onDeleteMedia(idx);
       }
     }
@@ -182,7 +182,7 @@ function ({
       const menu = (
         <Menu>
           {media.map((filename, idx) =>
-            <Menu.Item key={idx} onClick={() => _selectImage(idx)} text={filename} />)}
+            <MenuItem key={idx} onClick={() => _selectImage(idx)} text={filename} />)}
         </Menu>
       );
 
@@ -194,12 +194,12 @@ function ({
   }
 
   const pageMenu = <PageURLMenu
-    onChangeURL={!onUpdatePath || editedURL === null || !canEditURL || editedURLOccupiedByPageWithTitle !== null
+    onChangeURL={!onUpdatePath || editedURL === null || !canEditURL
       ? undefined
       : handleChangePath}
-    onAddSubpage={editedPage === null && editedURL === null ? onAddSubpage : undefined}
-    onDelete={editedPage === null && editedURL === null ? onDelete : undefined}
-    onAddRedirect={editedURL === null ? handleAddRedirect : undefined}
+    onAddSubpage={(editedPage === null && editedURL === null) ? onAddSubpage : undefined}
+    onDelete={(editedPage === null && editedURL === null && !hasChildren) ? onDelete : undefined}
+    onAddRedirect={(editedURL === null) ? handleAddRedirect : undefined}
   />;
 
   const initialContents: Record<string, any> | null =
@@ -241,21 +241,18 @@ function ({
 
           <FieldWithErrors
               label={`Path: ${nodePath.dirname(`/${url}`).replace(/^\//, '').replace(/\/$/, '')}/`}
+              errors={[]}
               helperText={!onUpdatePath
                 ? "URL cannot be edited for any page that contains subpages, and for the topmost-level page."
                 : undefined}
-              errors={editedURLOccupiedByPageWithTitle === null
-                ? []
-                : [{ message: `This path is occupied by page “${editedURLOccupiedByPageWithTitle}”` }]}
-              inline
-              css={css`.bp3-form-content { flex: 1; }`}>
+              inline css={css`.bp3-form-content { flex: 1; }`}>
             <ControlGroup>
               <InputGroup
                 fill
                 value={nodePath.basename(url)}
                 disabled={!canEditURL}
                 onChange={(evt: React.FormEvent<HTMLInputElement>) =>
-                  updateEditedURL(`${nodePath.dirname(path)}/${evt.currentTarget.value}`)
+                  updateEditedURL(`${nodePath.dirname(pagePath)}/${evt.currentTarget.value}`)
                 }
               />
               <Popover content={pageMenu}>
@@ -265,10 +262,6 @@ function ({
           </FieldWithErrors>
 
           {redirects.map((redirect, idx) => {
-            const editedRedirectOccupiedBy = editedPage === null
-              ? null
-              : getPageTitleAtPath(redirect);
-
             return (
               <FieldWithErrors
                   key={`redirect-${idx}`}
@@ -280,9 +273,7 @@ function ({
                     &ensp;
                     Redirect from: /{urlPrefix ? `${urlPrefix}/` : ''}
                   </>}
-                  errors={editedRedirectOccupiedBy === null || editedRedirectOccupiedBy === originalPage?.title
-                    ? []
-                    : [{ message: `This path is occupied by page “${editedRedirectOccupiedBy}”` }]}
+                  errors={[]}
                   inline
                   css={css`.bp3-form-content { flex: 1; }`}>
                 <ControlGroup>
@@ -334,7 +325,7 @@ function ({
 
         <SummaryEditor
           css={contentsExpanded ? css`display: none` : undefined}
-          key={`${path}=${JSON.stringify(initialSummary || {})}-${resetCounter}`}
+          key={`${pagePath}=${JSON.stringify(initialSummary || {})}-${resetCounter}`}
           onChange={canEdit ?
             ((newDoc) => updateEditedPage({ ...page!, summary: { doc: newDoc } }))
             : undefined}
@@ -350,7 +341,7 @@ function ({
           css={css`flex: 1; min-height: 30vh`}>
         <ContentsEditor
           css={css`flex: 1;`}
-          key={`${path}=${JSON.stringify(initialContents || {})}-${resetCounter}`}
+          key={`${pagePath}=${JSON.stringify(initialContents || {})}-${resetCounter}`}
           mediaDir={mediaDir}
           onChooseImageClick={(canEdit && (page?.media || []).length > 0)
             ? handleChooseImage
@@ -389,25 +380,55 @@ function ({
 
 
 const PageURLMenu: React.FC<{
-  onAddSubpage?: () => Promise<void>
+  onAddSubpage?: (newID: string) => Promise<void>
   onChangeURL?: (withRedirect: boolean) => Promise<void>
   onAddRedirect?: () => void
   onDelete?: () => Promise<void>
 }> = function ({ onChangeURL, onAddRedirect, onAddSubpage, onDelete }) {
-  return <Menu>
-    <Menu.Item icon="document" disabled={!onAddSubpage} onClick={onAddSubpage} text="Add subpage" />
-    <Menu.Item icon="data-lineage" disabled={!onAddRedirect} onClick={onAddRedirect} text="Redirect another path to this page" />
-    <Menu.Item icon="flows" disabled={!onChangeURL} onClick={() => onChangeURL!(true)} text="Change URL and leave redirect" />
-    <Menu.Divider title="Advanced" />
-    <Menu.Item icon="edit" intent="danger" disabled={!onChangeURL} onClick={() => onChangeURL!(false)} text="Change URL without redirect" />
-    <Menu.Item icon="trash" intent="danger" disabled={!onDelete} onClick={onDelete} text="Delete this page without redirect" />
-  </Menu>
+  const [subpageDialogIsOpen, openSubpageDialog] = useState(false);
+  const [subpageID, setSubpageID] = useState('new-page');
+  const canCreateSubpage = onAddSubpage && subpageID.trim() !== '';
+  async function handleAddSubpage() {
+    if (!canCreateSubpage || !onAddSubpage) {
+      return;
+    }
+    await onAddSubpage(subpageID);
+    setSubpageID('new-page');
+    openSubpageDialog(false);
+  }
+  return <>
+    <Menu>
+      <MenuItem icon="document" disabled={!onAddSubpage} onClick={() => openSubpageDialog(true)} text="Add subpage" />
+      <MenuItem icon="data-lineage" disabled={!onAddRedirect} onClick={onAddRedirect} text="Redirect another path to this page" />
+      <MenuItem icon="flows" disabled={!onChangeURL} onClick={() => onChangeURL!(true)} text="Change URL and leave redirect" />
+      <MenuDivider title="Advanced" />
+      <MenuItem icon="edit" intent="danger" disabled={!onChangeURL} onClick={() => onChangeURL!(false)} text="Change URL without redirect" />
+      <MenuItem icon="trash" intent="danger" disabled={!onDelete} onClick={onDelete} text="Delete this page without redirect" />
+    </Menu>
+    <Dialog isOpen={subpageDialogIsOpen} title="Add subpage">
+      <FormGroup
+          label="New page ID"
+          intent={subpageID === '' ? 'danger' : undefined}
+          helperText="Should contain English characters only, no punctuation or spaces. Used as the last part of subpage URL.">
+        <InputGroup
+          value={subpageID}
+          onChange={evt => setSubpageID(evt.currentTarget.value)}
+        />
+      </FormGroup>
+      <Button
+          intent={canCreateSubpage ? 'primary' : undefined}
+          disabled={!canCreateSubpage}
+          onClick={handleAddSubpage}>
+        Add subpage
+      </Button>
+    </Dialog>
+  </>
 };
 
 
 const PageMedia: React.FC<{
   media: string[]
-  mediaData: ReturnType<ObjectDataHook>
+  mediaData: ReturnType<Hooks.Data.GetObjectDataset>
   onAdd?: () => Promise<void>
   onDelete?: (idx: number) => Promise<void>
 }> = function ({ media, mediaData, onAdd, onDelete }) {

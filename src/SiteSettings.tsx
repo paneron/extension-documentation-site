@@ -2,14 +2,14 @@
 /** @jsxFrag React.Fragment */
 
 import log from 'electron-log';
-import yaml from 'js-yaml';
 import { css, jsx } from '@emotion/core';
 import React, { useState, useEffect, useContext } from 'react';
-import { ObjectChangeset, ObjectDataset } from "@riboseinc/paneron-extension-kit/types";
 import { Button, ButtonGroup, ControlGroup, FormGroup, InputGroup, Menu, NonIdealState, Popover } from '@blueprintjs/core';
+import { DatasetContext } from '@riboseinc/paneron-extension-kit/context';
+import { BufferDataset } from '@riboseinc/paneron-extension-kit/types/buffers';
+import { ObjectChangeset } from '@riboseinc/paneron-extension-kit/types';
 import { DocSiteSettingsHook } from './hooks';
 import deploymentSetup from './deployment';
-import { DatasetContext } from '@riboseinc/paneron-extension-kit/context';
 
 
 export interface SiteSettings {
@@ -51,7 +51,7 @@ function toFileContents(settings: SiteSettings): SiteSettingsFile {
 export const SiteSettings: React.FC<{
   originalSettings: ReturnType<DocSiteSettingsHook>
 }> = function ({ originalSettings }) {
-  const { changeObjects } = useContext(DatasetContext);
+  const { updateObjects } = useContext(DatasetContext);
 
   const [editedSettings, updateEditedSettings] = useState<SiteSettings | null>(null);
   const settings: SiteSettings | null = editedSettings || originalSettings.value;
@@ -60,7 +60,7 @@ export const SiteSettings: React.FC<{
   const isBusy: boolean = originalSettings.isUpdating || _isBusy;
 
   async function handleWriteDeploymentSetup(setupID: string, remove = false) {
-    if (isBusy || settings === null || editedSettings !== null || !changeObjects) { return; }
+    if (isBusy || settings === null || editedSettings !== null || !updateObjects) { return; }
 
     let changeset: ObjectChangeset;
     try {
@@ -77,43 +77,47 @@ export const SiteSettings: React.FC<{
 
     setBusy(true);
     try {
-      await changeObjects({
-        ...changeset,
-        [SETTINGS_FILENAME]: {
-          encoding: 'utf-8' as const,
-          oldValue: undefined,
-          newValue: yaml.dump(settingsFileData, { noRefs: true }),
+      await updateObjects({
+        commitMessage: "Write deployment setup",
+        objectChangeset: {
+          ...changeset,
+          [`/${SETTINGS_FILENAME}`]: {
+            oldValue: undefined,
+            newValue: settingsFileData,
+          },
         },
-      }, "Write deployment setup", true);
+        _dangerouslySkipValidation: true,
+      });
     } finally {
       setBusy(false);
     }
   }
 
   async function handleSaveSettings(newSettings: SiteSettings) {
-    if (isBusy || !changeObjects) { return; }
+    if (isBusy || !updateObjects) { return; }
 
     const settingsFileData = toFileContents(newSettings);
 
     setBusy(true);
     try {
-      await changeObjects({
-        [SETTINGS_FILENAME]: {
-          encoding: 'utf-8' as const,
-          oldValue: undefined,
-          newValue: yaml.dump(settingsFileData, { noRefs: true }),
+      await updateObjects({
+        commitMessage: "Update site settings",
+        objectChangeset: {
+          [`/${SETTINGS_FILENAME}`]: {
+            oldValue: undefined,
+            newValue: settingsFileData,
+          },
+          [`/${HEADER_BANNER_FILENAME}`]: {
+            oldValue: undefined,
+            newValue: { asText: newSettings.headerBannerBlob },
+          },
+          [`/${FOOTER_BANNER_FILENAME}`]: {
+            oldValue: undefined,
+            newValue: { asText: newSettings.footerBannerBlob },
+          },
         },
-        [HEADER_BANNER_FILENAME]: {
-          encoding: 'utf-8' as const,
-          oldValue: undefined,
-          newValue: newSettings.headerBannerBlob,
-        },
-        [FOOTER_BANNER_FILENAME]: {
-          encoding: 'utf-8' as const,
-          oldValue: undefined,
-          newValue: newSettings.footerBannerBlob,
-        },
-      }, "Update site settings", true);
+        _dangerouslySkipValidation: true,
+      });
     } finally {
       setBusy(false);
       updateEditedSettings(null);
@@ -124,7 +128,7 @@ export const SiteSettings: React.FC<{
     return <NonIdealState
       description={
         <Button
-            disabled={!changeObjects}
+            disabled
             onClick={() => handleSaveSettings(SETTINGS_STUB)}>
           Initialize site settings
         </Button>
@@ -201,14 +205,14 @@ export const SiteSettings: React.FC<{
                 {settings.deploymentSetup
                   ? <Menu.Item
                         icon="trash"
-                        disabled={isBusy || editedSettings !== null || !changeObjects}
+                        disabled={isBusy || editedSettings !== null || !updateObjects}
                         onClick={() => settings.deploymentSetup ? handleWriteDeploymentSetup(settings.deploymentSetup, true) : void 0}
                         text={deploymentSetup[settings.deploymentSetup]?.title} />
                   : Object.entries(deploymentSetup).map(([setupID, setup]) =>
                       <Menu.Item
                         key={setupID}
                         icon="add"
-                        disabled={isBusy || editedSettings !== null || !changeObjects}
+                        disabled={isBusy || editedSettings !== null || !updateObjects}
                         onClick={() => handleWriteDeploymentSetup(setupID)}
                         text={setup.title}
                         title={setup.description} />
@@ -252,11 +256,11 @@ const SVGFileInputWithPreview: React.FC<{
   }, [contentsBlob]);
 
   async function handleChangeFile() {
-    if (!onContentsChange) {
+    if (!onContentsChange || !requestFileFromFilesystem) {
       return;
     }
 
-    const result: ObjectDataset = await requestFileFromFilesystem({
+    const result: BufferDataset = await requestFileFromFilesystem({
       prompt: "Please choose a small SVG file",
       filters: [{ name: "Images", extensions: ['svg'] }],
     });
@@ -264,10 +268,10 @@ const SVGFileInputWithPreview: React.FC<{
       throw new Error("Failed to choose a single file");
     }
     const chosenFile = Object.values(result)[0];
-    if (chosenFile?.encoding !== 'utf-8') {
-      throw new Error("Failed to choose an SVG file")
+    if (!chosenFile) {
+      throw new Error("Failed to choose a single file");
     }
-    onContentsChange(chosenFile.value);
+    onContentsChange(chosenFile.toString());
   }
 
   return (

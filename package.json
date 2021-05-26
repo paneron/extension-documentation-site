@@ -1,6 +1,6 @@
 {
   "name": "@riboseinc/paneron-extension-aperis-site",
-  "version": "1.0.0-alpha34",
+  "version": "1.0.0-alpha35",
   "description": "Write and maintain documentation",
   "main": "plugin.js",
   "repository": "https://github.com/paneron/extension-aperis-site",
@@ -27,18 +27,18 @@
     "title": "Aperis",
     "iconURL": "https://www.aperis.org/mark.png",
     "featured": true,
-    "requiredHostAppVersion": "1.0.0-alpha19"
+    "requiredHostAppVersion": "1.0.0-beta1"
   },
   "devDependencies": {
     "@babel/cli": "^7.1.5",
     "@babel/core": "^7.4.0",
     "@babel/preset-env": "^7.4.2",
-    "@blueprintjs/core": "^3.28.2",
-    "@blueprintjs/datetime": "^3.18.2",
-    "@blueprintjs/icons": "^3.18.1",
+    "@blueprintjs/core": "^3.42.0",
+    "@blueprintjs/icons": "^3.26.0",
+    "@blueprintjs/popover2": "^0.9.0",
     "@blueprintjs/select": "^3.13.3",
     "@emotion/core": "^10.0.35",
-    "@riboseinc/paneron-extension-kit": "2.0.0-dev23",
+    "@riboseinc/paneron-extension-kit": "2.0.0-dev25",
     "@riboseinc/reprose": "^1.0.0-alpha9",
     "@types/fs-extra": "^9.0.1",
     "@types/js-yaml": "^3.12.5",

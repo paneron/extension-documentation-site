@@ -3,77 +3,39 @@ import yaml from 'js-yaml';
 
 import log from 'electron-log';
 
-import {
-  FileChangeType,
-  ObjectChangeStatusSet,
-  ObjectDataHook,
-  ObjectDataRequest, ObjectSyncStatusHook,
-  ValueHook,
-} from '@riboseinc/paneron-extension-kit/types';
+import { Hooks, ValueHook } from '@riboseinc/paneron-extension-kit/types';
 
 import { SourceDocPageData } from './types';
-import { filepathCandidates, filepathToDocsPath, isDocumentationPage } from './util';
+import { filepathCandidates, objectPathToDocsPath } from './util';
 import { FOOTER_BANNER_FILENAME, HEADER_BANNER_FILENAME, SETTINGS_FILENAME, SiteSettings } from './SiteSettings';
 
 
 
-export type DocPageSyncStatusHook = (useObjectSyncStatus: ObjectSyncStatusHook) =>
-  ReturnType<ObjectSyncStatusHook> & { asFiles: Record<string, FileChangeType> }
-
-export type DocPageDataHook = (useObjectData: ObjectDataHook, paths: string[]) =>
+export type DocPageDataHook = (useObjectData: Hooks.Data.GetObjectDataset, paths: string[]) =>
   ValueHook<Record<string, SourceDocPageData>>;
 
-export type DocPageMediaHook = (useObjectData: ObjectDataHook, media: string[], pageFilePath: string | undefined) =>
-  ReturnType<ObjectDataHook>;
+export type DocPageMediaHook = (useObjectData: Hooks.Data.GetObjectDataset, media: string[], pageFilePath: string | undefined) =>
+  ReturnType<Hooks.Data.GetObjectDataset>;
 
-export type DocSiteSettingsHook = (useObjectData: ObjectDataHook) =>
+export type DocSiteSettingsHook = (useObjectData: Hooks.Data.GetObjectDataset) =>
   ValueHook<SiteSettings | null>
 
 
-export const useDocPageSyncStatus: DocPageSyncStatusHook = (useObjectSyncStatus) => {
-  const result = useObjectSyncStatus();
-  const objects = result.value;
-
-  const filteredFiles: ObjectChangeStatusSet = Object.entries(objects).
-    filter(([atPath, _]) => isDocumentationPage(atPath)).
-    map(([atPath, state]) => ({ [atPath]: state })).
-    reduce((p, c) => ({ ...p, ...c }), {});
-
-  const asDocPaths = Object.entries(filteredFiles).
-    map(([path, changeStatus]) => ({
-      [filepathToDocsPath(path)]: changeStatus,
-    })).
-    reduce((p, c) => ({ ...p, ...c }), {});
-
-  return {
-    ...result,
-    value: asDocPaths,
-    asFiles: filteredFiles,
-  };
-};
-
-
 export const useDocPageData: DocPageDataHook = (useObjectData, paths) => {
-  const dataRequest: ObjectDataRequest = paths.map(path => {
-    //return { [path]: 'utf-8' as const };
-    const possiblePaths = filepathCandidates(path);
-    let request: ObjectDataRequest = {};
-    for (const path of possiblePaths) {
-      request[path] = 'utf-8' as const;
-    }
-    return request;
-  }).reduce((p, c) => ({ ...p, ...c }), {});
+  const objectPaths: string[] = paths.map(p => {
+    return filepathCandidates(p) as string[];
+  }).reduce((p, c) => ([ ...p, ...c ]), []);
 
-  const data = useObjectData(dataRequest);
+  const data = useObjectData({ objectPaths });
 
-  const parsedData = Object.entries(data.value).
-  filter(([ _, data ]) => data !== null && data.encoding === 'utf-8').
+  const parsedData = Object.entries(data.value.data).
+  filter(([ _, data ]) => data !== null).
   map(([ path, data ]) => {
-    const item: SourceDocPageData = yaml.load(data!.value as string);
+    const item: SourceDocPageData = data! as SourceDocPageData;
     if (item.media === undefined) {
       item.media = [];
     }
-    return { [filepathToDocsPath(path)]: item };
+    return { [objectPathToDocsPath(path)]: item };
   }).
   reduce((p, c) => ({ ...p, ...c }), {});
 
@@ -84,53 +46,48 @@ export const useDocPageData: DocPageDataHook = (useObjectData, paths) => {
 };
 
 
-export const useDocPageMedia: DocPageMediaHook = (useObjectData, media, pageFilePath) => {
-  let request: ObjectDataRequest;
+export const useDocPageMedia: DocPageMediaHook = (useObjectData, media, pageObjectPath) => {
+  let objectPaths: string[];
 
-  if (!pageFilePath) {
+  if (!pageObjectPath) {
     log.warn("Cannot load page media data: missing page file path");
-    request = {};
+    objectPaths = [];
 
   } else if (media.length > 0) {
-    const dir = path.dirname(pageFilePath);
+    const dir = path.dirname(pageObjectPath);
 
-    request = (media).
+    if (!dir) {
+      objectPaths = [];
+    }
+
+    objectPaths = (media).
       map(mediaFile => {
-        if (!dir) { return {}; }
-        const filePath = path.posix.join(dir, mediaFile);
-        if (mediaFile.endsWith('.svg')) {
-          return { [filePath]: 'utf-8' as const } as ObjectDataRequest;
-        } else {
-          return { [filePath]: 'binary' as const } as ObjectDataRequest;
-        }
-      }).
-      reduce((p, c) => ({ ...p, ...c }), {});
+        return path.posix.join(dir, mediaFile);
+      });
 
   } else {
-    request = {};
+    objectPaths = [];
   }
 
-  log.debug("Media data request", media, pageFilePath, request);
+  log.debug("Media data request", media, pageObjectPath, objectPaths);
 
-  return useObjectData(request);
+  return useObjectData({ objectPaths });
 };
 
 
 export const useSiteSettings: DocSiteSettingsHook = (useObjectData) => {
   const settingsHook = useObjectData({
-    [SETTINGS_FILENAME]: 'utf-8',
-    [HEADER_BANNER_FILENAME]: 'utf-8',
-    [FOOTER_BANNER_FILENAME]: 'utf-8',
+    objectPaths: [SETTINGS_FILENAME, HEADER_BANNER_FILENAME, FOOTER_BANNER_FILENAME],
   });
 
   const hasSettingFiles: boolean = [SETTINGS_FILENAME, HEADER_BANNER_FILENAME, FOOTER_BANNER_FILENAME].
-  find(fn => settingsHook.value[fn] === undefined || settingsHook.value[fn] === null) === undefined;
+  find(fname => settingsHook.value.data[fname] === undefined || settingsHook.value.data[fname] === null) === undefined;
 
   if (!hasSettingFiles) {
     return { ...settingsHook, value: null  };
   }
 
-  const settingsFileData = yaml.load(settingsHook.value[SETTINGS_FILENAME]!.value as string);
+  const settingsFileData = yaml.load(settingsHook.value.data[SETTINGS_FILENAME]!.value as string);
 
   const settingsFormatIsCorrect: boolean = (
     (settingsFileData.title || '') !== '' &&
@@ -148,8 +105,8 @@ export const useSiteSettings: DocSiteSettingsHook = (useObjectData) => {
     siteURLPrefix: settingsFileData.siteURLPrefix,
     footerBannerLink: settingsFileData.footerBannerLink,
 
-    headerBannerBlob: settingsHook.value[HEADER_BANNER_FILENAME]!.value as string,
-    footerBannerBlob: settingsHook.value[FOOTER_BANNER_FILENAME]!.value as string,
+    headerBannerBlob: settingsHook.value.data[HEADER_BANNER_FILENAME]!.value as string,
+    footerBannerBlob: settingsHook.value.data[FOOTER_BANNER_FILENAME]!.value as string,
     deploymentSetup: settingsFileData.deploymentSetup || null,
   };
 
